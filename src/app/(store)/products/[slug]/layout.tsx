@@ -2,21 +2,13 @@ import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import { parseProductVariants } from "@/lib/utils";
 
+// Server-rendered on demand — Neon DB not available at build time
+export const dynamic = "force-dynamic";
+
 const siteUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
 const siteName = "متجر الاشتراكات الرقمية";
 
 interface Props { params: { slug: string } }
-
-/* ─────────────────────────────────────────
-   generateStaticParams
-───────────────────────────────────────── */
-export async function generateStaticParams() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    select: { slug: true },
-  });
-  return products.map((p) => ({ slug: p.slug }));
-}
 
 /* ─────────────────────────────────────────
    generateMetadata
