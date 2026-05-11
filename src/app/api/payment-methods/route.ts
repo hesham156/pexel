@@ -1,0 +1,64 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * Public endpoint — returns which payment gateways are enabled
+ * and their non-sensitive config (bank details for display).
+ * Cached for 60s.
+ */
+export async function GET() {
+  const settings = await prisma.setting.findMany({
+    where: {
+      key: {
+        in: [
+          "pm_bank_transfer_enabled",
+          "pm_bank_transfer_account_name",
+          "pm_bank_transfer_bank_name",
+          "pm_bank_transfer_account_number",
+          "pm_bank_transfer_iban",
+          "pm_paypal_enabled",
+          "pm_paypal_mode",
+          "pm_tabby_enabled",
+          "pm_tabby_public_key",
+          "pm_tabby_merchant_code",
+          "pm_tamara_enabled",
+          "pm_tamara_merchant_url",
+        ],
+      },
+    },
+    select: { key: true, value: true },
+  });
+
+  const map: Record<string, string> = {};
+  settings.forEach((s) => { map[s.key] = s.value; });
+
+  const data = {
+    bankTransfer: {
+      enabled: map["pm_bank_transfer_enabled"] === "true",
+      accountName:   map["pm_bank_transfer_account_name"]   || "",
+      bankName:      map["pm_bank_transfer_bank_name"]      || "",
+      accountNumber: map["pm_bank_transfer_account_number"] || "",
+      iban:          map["pm_bank_transfer_iban"]           || "",
+    },
+    paypal: {
+      enabled: map["pm_paypal_enabled"] === "true",
+      mode:    map["pm_paypal_mode"] || "sandbox",
+    },
+    tabby: {
+      enabled:      map["pm_tabby_enabled"] === "true",
+      publicKey:    map["pm_tabby_public_key"]    || "",
+      merchantCode: map["pm_tabby_merchant_code"] || "",
+    },
+    tamara: {
+      enabled:     map["pm_tamara_enabled"] === "true",
+      merchantUrl: map["pm_tamara_merchant_url"] || "",
+    },
+  };
+
+  return NextResponse.json(
+    { success: true, data },
+    { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } }
+  );
+}

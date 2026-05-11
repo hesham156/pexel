@@ -1,0 +1,129 @@
+"use client";
+
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const faqs = [
+  {
+    category: "الطلبات والتسليم",
+    items: [
+      {
+        q: "كيف يتم تسليم الاشتراكات؟",
+        a: "بعد تأكيد الدفع، يتم تسليم بيانات الاشتراك تلقائياً في حال كان التسليم فورياً. ستظهر البيانات مباشرةً في صفحة تفاصيل الطلب بلوحة التحكم الخاصة بك. في حالة التسليم اليدوي، يتم التسليم خلال 1-24 ساعة.",
+      },
+      {
+        q: "ما المدة الزمنية لمراجعة الدفع؟",
+        a: "يتم مراجعة إثبات الدفع خلال 1-6 ساعات في أوقات العمل. بعد الموافقة يُسلَّم الاشتراك فوراً.",
+      },
+      {
+        q: "هل يمكنني إلغاء طلبي؟",
+        a: "يمكن إلغاء الطلب قبل مراجعة الدفع. بعد تسليم بيانات الاشتراك، لا يمكن الإلغاء.",
+      },
+    ],
+  },
+  {
+    category: "الدفع",
+    items: [
+      {
+        q: "ما طرق الدفع المتاحة؟",
+        a: "نقبل التحويل البنكي، والعملات الرقمية (Bitcoin, USDT)، وPayPal.",
+      },
+      {
+        q: "ماذا أفعل بعد التحويل البنكي؟",
+        a: "بعد إتمام التحويل، ارفع صورة من إيصال الدفع في صفحة الطلب. سيتم مراجعته وتأكيده خلال ساعات.",
+      },
+      {
+        q: "هل هناك رسوم إضافية على الدفع؟",
+        a: "لا توجد رسوم إضافية. المبلغ الظاهر في الموقع هو ما تدفعه فعلياً.",
+      },
+    ],
+  },
+  {
+    category: "الحسابات والاشتراكات",
+    items: [
+      {
+        q: "هل الاشتراكات أصلية؟",
+        a: "نعم، جميع اشتراكاتنا أصلية 100% ومرخصة مباشرةً من المنصات العالمية.",
+      },
+      {
+        q: "ماذا أفعل إذا لم تعمل بيانات الاشتراك؟",
+        a: "افتح تذكرة دعم فني فوراً مع ذكر رقم طلبك. سيتم حل المشكلة أو استبدال الاشتراك خلال ساعات.",
+      },
+      {
+        q: "هل يمكنني مشاركة الاشتراك؟",
+        a: "يعتمد ذلك على نوع الاشتراك. بعض الاشتراكات تتيح أجهزة متعددة. تحقق من تفاصيل المنتج.",
+      },
+    ],
+  },
+  {
+    category: "الدعم والاسترداد",
+    items: [
+      {
+        q: "هل يمكنني الحصول على استرداد؟",
+        a: "نعم، في حالة المنتجات المعيبة أو غير الصالحة يتم الاسترداد الكامل. راجع سياسة الاسترداد للتفاصيل.",
+      },
+      {
+        q: "كيف أتواصل مع الدعم؟",
+        a: "يمكنك فتح تذكرة دعم من لوحة التحكم، أو التواصل معنا عبر البريد الإلكتروني support@store.com",
+      },
+    ],
+  },
+];
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-5 py-4 text-start hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+      >
+        <span className="font-semibold text-gray-900 dark:text-white">{q}</span>
+        <ChevronDown className={cn("h-5 w-5 text-gray-400 shrink-0 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && (
+        <div className="px-5 pb-4 text-gray-600 dark:text-gray-400 leading-relaxed border-t border-gray-100 dark:border-gray-700 pt-3">
+          {a}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function FAQPage() {
+  return (
+    <div className="min-h-screen py-12">
+      <div className="container-custom max-w-3xl">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3">الأسئلة الشائعة</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-lg">إجابات على أكثر الأسئلة شيوعاً</p>
+        </div>
+
+        <div className="space-y-8">
+          {faqs.map((section) => (
+            <div key={section.category}>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <span className="w-2 h-2 rounded-full bg-primary-600 dark:bg-primary-400" />
+                </span>
+                {section.category}
+              </h2>
+              <div className="space-y-3">
+                {section.items.map((item) => (
+                  <FAQItem key={item.q} q={item.q} a={item.a} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 text-center bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-2xl p-8">
+          <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">لم تجد إجابتك؟</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">تواصل مع فريق الدعم الفني</p>
+          <a href="/contact" className="btn-primary inline-flex">تواصل معنا</a>
+        </div>
+      </div>
+    </div>
+  );
+}
