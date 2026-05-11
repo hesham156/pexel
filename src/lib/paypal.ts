@@ -10,7 +10,14 @@ export async function getPayPalConfig() {
   const settings = await prisma.setting.findMany({
     where: {
       key: {
-        in: ["pm_paypal_client_id", "pm_paypal_client_secret", "pm_paypal_mode", "pm_paypal_enabled"],
+        in: [
+          "pm_paypal_client_id",
+          "pm_paypal_client_secret",
+          "pm_paypal_mode",
+          "pm_paypal_enabled",
+          "pm_paypal_currency",
+          "pm_paypal_exchange_rate",
+        ],
       },
     },
   });
@@ -21,10 +28,12 @@ export async function getPayPalConfig() {
   });
 
   return {
-    enabled: config["pm_paypal_enabled"] === "true",
-    clientId: config["pm_paypal_client_id"] || "",
+    enabled:      config["pm_paypal_enabled"] === "true",
+    clientId:     config["pm_paypal_client_id"] || "",
     clientSecret: config["pm_paypal_client_secret"] || "",
-    mode: config["pm_paypal_mode"] === "live" ? "live" : "sandbox",
+    mode:         config["pm_paypal_mode"] === "live" ? "live" : "sandbox",
+    currency:     config["pm_paypal_currency"] || "USD",
+    exchangeRate: parseFloat(config["pm_paypal_exchange_rate"] || "1"),
   };
 }
 
@@ -68,6 +77,9 @@ export async function createPayPalOrder(amount: number, returnUrl: string, cance
   const accessToken = await generateAccessToken(config.clientId, config.clientSecret, config.mode);
   const baseURL = config.mode === "live" ? PAYPAL_API_BASE_LIVE : PAYPAL_API_BASE_SANDBOX;
 
+  // Convert store amount to PayPal currency using exchange rate
+  const convertedAmount = (amount * config.exchangeRate).toFixed(2);
+
   const response = await fetch(`${baseURL}/v2/checkout/orders`, {
     method: "POST",
     headers: {
@@ -79,18 +91,18 @@ export async function createPayPalOrder(amount: number, returnUrl: string, cance
       purchase_units: [
         {
           amount: {
-            currency_code: "USD",
-            value: amount.toFixed(2), // Ensure string with 2 decimals
+            currency_code: config.currency,
+            value: convertedAmount,
           },
         },
       ],
       payment_source: {
         paypal: {
           experience_context: {
-            payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            payment_method_preference: "UNRESTRICTED",
             brand_name: "Digital Subscriptions Store",
             locale: "ar-SA",
-            landing_page: "LOGIN",
+            landing_page: "BILLING",
             user_action: "PAY_NOW",
             return_url: returnUrl,
             cancel_url: cancelUrl,

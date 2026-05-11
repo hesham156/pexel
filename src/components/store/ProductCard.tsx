@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, Star, Zap, Clock } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ShoppingCart, Star, Zap, Clock, AlertTriangle } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -18,6 +19,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, className }: ProductCardProps) {
   const { addItem } = useCartStore();
+  const reduced = useReducedMotion();
 
   const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
   const comparePrice = product.comparePrice
@@ -44,12 +46,15 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   return (
     <Link href={`/products/${product.slug}`}>
-      <div
+      <motion.div
         className={cn(
           "group relative rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700",
-          "overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer",
+          "overflow-hidden cursor-pointer",
           className
         )}
+        whileHover={reduced ? {} : { y: -6, boxShadow: "0 20px 40px rgba(0,0,0,0.12)" }}
+        whileTap={reduced ? {} : { scale: 0.98 }}
+        transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         {/* Badges */}
         <div className="absolute top-3 start-3 z-10 flex flex-col gap-1.5">
@@ -66,7 +71,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           )}
         </div>
 
-        {/* Delivery Method Badge */}
+        {/* Delivery Badge */}
         <div className="absolute top-3 end-3 z-10">
           <Badge
             variant={product.deliveryMethod === "AUTOMATIC" ? "success" : "warning"}
@@ -74,39 +79,40 @@ export function ProductCard({ product, className }: ProductCardProps) {
             dot
           >
             {product.deliveryMethod === "AUTOMATIC" ? (
-              <>
-                <Zap className="h-3 w-3" />
-                تسليم فوري
-              </>
+              <><Zap className="h-3 w-3" />تسليم فوري</>
             ) : (
-              <>
-                <Clock className="h-3 w-3" />
-                يدوي
-              </>
+              <><Clock className="h-3 w-3" />يدوي</>
             )}
           </Badge>
         </div>
 
-        {/* Product Image */}
+        {/* Image */}
         <div className="relative aspect-video bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
           {product.image ? (
-            <Image
-              src={product.image}
-              alt={product.nameAr}
-              fill
-              className="object-contain p-6 transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              unoptimized
-            />
+            <motion.div
+              className="absolute inset-0"
+              whileHover={reduced ? {} : { scale: 1.06 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+            >
+              <Image
+                src={product.image}
+                alt={product.nameAr}
+                fill
+                className="object-contain p-6"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                unoptimized
+              />
+            </motion.div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-6xl">
-                {product.category.icon || "📦"}
-              </div>
+              <span className="text-5xl">{product.category.icon || "📦"}</span>
             </div>
           )}
-          <div
-            className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity"
+          <motion.div
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 0.08 }}
+            transition={{ duration: 0.2 }}
             style={{ background: product.category.color || "#7c3aed" }}
           />
         </div>
@@ -116,7 +122,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <p className="text-xs font-medium text-primary-600 dark:text-primary-400 mb-1">
             {product.category.nameAr}
           </p>
-          <h3 className="font-bold text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
             {product.nameAr}
           </h3>
 
@@ -133,7 +139,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             </div>
           )}
 
-          {/* Price */}
+          {/* Price + CTA */}
           <div className="flex items-end justify-between mt-3">
             <div>
               <div className="text-xl font-bold text-gray-900 dark:text-white">
@@ -145,25 +151,26 @@ export function ProductCard({ product, className }: ProductCardProps) {
                 </div>
               )}
             </div>
-            <Button
-              size="sm"
-              onClick={handleAddToCart}
-              className="gap-1.5"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              أضف
-            </Button>
+            <motion.div whileTap={reduced ? {} : { scale: 0.93 }}>
+              <Button size="sm" onClick={handleAddToCart} className="gap-1.5">
+                <ShoppingCart className="h-4 w-4" />
+                أضف
+              </Button>
+            </motion.div>
           </div>
         </div>
 
-        {/* Stock indicator */}
+        {/* Low stock */}
         {product.stockCount < 5 && product.stockCount > 0 && (
-          <div className="px-4 pb-3">
+          <div className="px-4 pb-3 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
             <p className="text-xs text-orange-500 font-medium">
-              ⚠️ متبقي {product.stockCount} فقط!
+              متبقي {product.stockCount} فقط!
             </p>
           </div>
         )}
+
+        {/* Out of stock overlay */}
         {product.stockCount === 0 && (
           <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center rounded-2xl">
             <span className="bg-gray-800 text-white px-4 py-2 rounded-xl font-bold text-sm">
@@ -171,7 +178,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             </span>
           </div>
         )}
-      </div>
+      </motion.div>
     </Link>
   );
 }

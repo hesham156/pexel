@@ -488,6 +488,8 @@ async function main() {
     { key: "pm_paypal_client_id",            value: "",                           type: "text",    label: "PayPal Client ID",        labelAr: "Client ID",            group: "payment_methods" },
     { key: "pm_paypal_client_secret",        value: "",                           type: "password",label: "PayPal Client Secret",    labelAr: "Client Secret",        group: "payment_methods" },
     { key: "pm_paypal_mode",                 value: "sandbox",                    type: "select",  label: "PayPal Mode",             labelAr: "بيئة التشغيل",         group: "payment_methods" },
+    { key: "pm_paypal_currency",             value: "USD",                        type: "text",    label: "PayPal Currency Code",    labelAr: "عملة PayPal (USD/EUR)", group: "payment_methods" },
+    { key: "pm_paypal_exchange_rate",        value: "1",                          type: "text",    label: "Exchange Rate to PayPal Currency", labelAr: "سعر التحويل للعملة (مثال: 0.27 لـ SAR→USD)", group: "payment_methods" },
     { key: "pm_tabby_enabled",               value: "false",                      type: "boolean", label: "Tabby Enabled",           labelAr: "تفعيل Tabby",          group: "payment_methods" },
     { key: "pm_tabby_public_key",            value: "",                           type: "text",    label: "Tabby Public Key",        labelAr: "Public Key",           group: "payment_methods" },
     { key: "pm_tabby_secret_key",            value: "",                           type: "password",label: "Tabby Secret Key",        labelAr: "Secret Key",           group: "payment_methods" },

@@ -78,6 +78,7 @@ model User {
   tickets       SupportTicket[]
   notifications Notification[]
   adminLogs     AdminLog[]
+  posts         Post[]
 
   @@map("users")
 }
@@ -309,4 +310,56 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model PostCategory {
+  id          String   @id @default(cuid())
+  name        String
+  nameAr      String
+  slug        String   @unique
+  description String?
+  color       String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts Post[]
+
+  @@map("post_categories")
+}
+
+model Post {
+  id              String       @id @default(cuid())
+  title           String
+  titleAr         String
+  slug            String       @unique
+  excerpt         String?
+  excerptAr       String?
+  content         String       @db.Text
+  contentAr       String       @db.Text
+  coverImage      String?
+  authorId        String
+  categoryId      String?
+  status          PostStatus   @default(DRAFT)
+  tags            String[]
+  metaTitle       String?
+  metaTitleAr     String?
+  metaDescription String?
+  metaDescriptionAr String?
+  readingTime     Int          @default(0)
+  viewCount       Int          @default(0)
+  publishedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  author   User          @relation(fields: [authorId], references: [id])
+  category PostCategory? @relation(fields: [categoryId], references: [id])
+
+  @@map("posts")
 }

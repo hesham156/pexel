@@ -32,6 +32,7 @@ const config: Config = {
         "fade-in": "fadeIn 0.3s ease-in-out",
         "slide-up": "slideUp 0.3s ease-out",
         "slide-in-right": "slideInRight 0.3s ease-out",
+        "fly-out": "flyOut var(--fly-duration, 5s) ease-in var(--fly-delay, 0s) infinite",
       },
       keyframes: {
         fadeIn: {
@@ -46,6 +47,12 @@ const config: Config = {
           "0%": { transform: "translateX(100%)" },
           "100%": { transform: "translateX(0)" },
         },
+        flyOut: {
+          "0%":   { transform: "scale(0.08)", opacity: "0" },
+          "10%":  { opacity: "1" },
+          "85%":  { opacity: "0.9" },
+          "100%": { transform: "scale(2.8)", opacity: "0" },
+        },
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
@@ -53,7 +60,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };
 
 export default config;

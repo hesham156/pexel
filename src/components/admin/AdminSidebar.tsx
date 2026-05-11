@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { SiteLogo } from "@/components/ui/site-logo";
 import {
   LayoutDashboard, Package, Tag, ShoppingBag, Users, CreditCard, Archive,
-  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck,
+  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck, BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,12 @@ const navGroups = [
       { href: "/admin/payments", label: "المدفوعات", icon: CreditCard },
       { href: "/admin/payment-methods", label: "طرق الدفع", icon: Wallet },
       { href: "/admin/customers", label: "العملاء", icon: Users },
+    ],
+  },
+  {
+    label: "المحتوى",
+    items: [
+      { href: "/admin/blog", label: "المقالات", icon: BookOpen },
     ],
   },
   {
@@ -63,9 +70,7 @@ export function AdminSidebar() {
       {/* Brand */}
       <div className="px-4 py-5 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center shadow-lg shadow-primary-500/30">
-            <span className="text-white font-bold">د</span>
-          </div>
+          <SiteLogo size="sm" />
           <div>
             <p className="font-black text-gray-900 dark:text-white text-sm">لوحة الإدارة</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">متجر رقمي</p>

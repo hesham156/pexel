@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, Phone, MapPin, Twitter, Instagram, Youtube } from "lucide-react";
+import { SiteLogo } from "@/components/ui/site-logo";
 
 const categories = [
   { href: "/categories/streaming", label: "خدمات البث" },
@@ -13,6 +14,7 @@ const categories = [
 const quickLinks = [
   { href: "/", label: "الرئيسية" },
   { href: "/products", label: "جميع المنتجات" },
+  { href: "/blog", label: "المدونة" },
   { href: "/faq", label: "الأسئلة الشائعة" },
   { href: "/contact", label: "اتصل بنا" },
   { href: "/terms", label: "الشروط والأحكام" },
@@ -26,9 +28,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">د</span>
-              </div>
+              <SiteLogo size="sm" />
               <div>
                 <p className="font-bold text-white text-base">متجر رقمي</p>
                 <p className="text-xs text-primary-400">للاشتراكات الرقمية</p>

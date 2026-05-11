@@ -194,6 +194,24 @@ export default function PaymentMethodsPage() {
               <Input label="Client ID" value={values["pm_paypal_client_id"] || ""} onChange={e => set("pm_paypal_client_id", e.target.value)} placeholder="AYSq3RD..." />
               <PasswordInput label="Client Secret" value={values["pm_paypal_client_secret"] || ""} onChange={v => set("pm_paypal_client_secret", v)} />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="عملة PayPal — USD / EUR / GBP"
+                value={values["pm_paypal_currency"] || "USD"}
+                onChange={e => set("pm_paypal_currency", e.target.value.toUpperCase())}
+                placeholder="USD"
+              />
+              <Input
+                label="سعر التحويل (عملة المتجر ÷ عملة PayPal)"
+                type="number"
+                value={values["pm_paypal_exchange_rate"] || "1"}
+                onChange={e => set("pm_paypal_exchange_rate", e.target.value)}
+                placeholder="0.27"
+              />
+            </div>
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-400">
+              ⚠️ PayPal لا يدعم SAR أو EGP. استخدم USD مع سعر تحويل مناسب. مثال: 1 USD = 3.75 SAR → اكتب <strong>0.267</strong>
+            </div>
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">بيئة التشغيل</span>
               <div className="flex gap-2 ms-auto">

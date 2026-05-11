@@ -40,5 +40,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...productPages, ...categoryPages];
+  // Dynamic: blog posts
+  const posts = await prisma.post.findMany({
+    where: { status: "PUBLISHED" },
+    select: { slug: true, updatedAt: true },
+    orderBy: { publishedAt: "desc" },
+  });
+
+  const blogPages: MetadataRoute.Sitemap = [
+    { url: `${siteUrl}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
+    ...posts.map((p) => ({
+      url: `${siteUrl}/blog/${p.slug}`,
+      lastModified: p.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+  ];
+
+  return [...staticPages, ...productPages, ...categoryPages, ...blogPages];
 }

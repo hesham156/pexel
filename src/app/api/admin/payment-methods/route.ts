@@ -22,7 +22,9 @@ const PAYMENT_KEYS = [
   // PayPal
   "pm_paypal_client_id",
   "pm_paypal_client_secret",
-  "pm_paypal_mode", // sandbox | live
+  "pm_paypal_mode",
+  "pm_paypal_currency",
+  "pm_paypal_exchange_rate",
 
   // Tabby
   "pm_tabby_public_key",
@@ -47,6 +49,8 @@ const DEFAULT_LABELS: Record<string, { labelAr: string; type: string }> = {
   pm_paypal_client_id:           { labelAr: "Client ID", type: "text" },
   pm_paypal_client_secret:       { labelAr: "Client Secret", type: "password" },
   pm_paypal_mode:                { labelAr: "بيئة التشغيل", type: "select" },
+  pm_paypal_currency:            { labelAr: "عملة PayPal", type: "text" },
+  pm_paypal_exchange_rate:       { labelAr: "سعر التحويل", type: "text" },
   pm_tabby_public_key:           { labelAr: "Public Key", type: "text" },
   pm_tabby_secret_key:           { labelAr: "Secret Key", type: "password" },
   pm_tabby_merchant_code:        { labelAr: "Merchant Code", type: "text" },
