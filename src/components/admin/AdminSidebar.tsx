@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { SiteLogo } from "@/components/ui/site-logo";
 import {
   LayoutDashboard, Package, Tag, ShoppingBag, Users, CreditCard, Archive,
-  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck, BookOpen,
+  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck, BookOpen, Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,9 @@ const navGroups = [
       { href: "/admin/products", label: "المنتجات", icon: Package },
       { href: "/admin/categories", label: "الفئات", icon: Tag },
       { href: "/admin/stock", label: "مخزون الاشتراكات", icon: Archive },
-      { href: "/admin/coupons", label: "الكوبونات", icon: TicketPercent },
+      { href: "/admin/coupons",        label: "الكوبونات",         icon: TicketPercent },
+      { href: "/admin/announcements",  label: "الإعلانات والعروض", icon: Megaphone },
+      { href: "/admin/ads",            label: "البنرات الإعلانية", icon: Tag },
     ],
   },
   {

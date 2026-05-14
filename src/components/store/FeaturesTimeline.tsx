@@ -7,9 +7,9 @@ import type { TimelineItem } from "@/components/ui/radial-orbital-timeline";
 const timelineData: TimelineItem[] = [
   {
     id: 1,
-    title: "تسليم فوري",
-    date: "< 1 دقيقة",
-    content: "معظم الاشتراكات تُسلَّم تلقائياً فور اعتماد الدفع دون انتظار. نظام آلي يعمل 24/7.",
+    title: "تنفيذ وتسليم سريع",
+    date: "أسرع وقت",
+    content: "معظم الاشتراكات تُسلَّم تلقائياً فور اعتماد الدفع، وخدمات التصميم والبرمجة تتم بجدولة زمنية دقيقة.",
     category: "delivery",
     icon: Zap,
     relatedIds: [2, 5],
@@ -62,9 +62,9 @@ const timelineData: TimelineItem[] = [
   },
   {
     id: 6,
-    title: "تجديد ذكي",
-    date: "تلقائي",
-    content: "إشعار تذكير قبل انتهاء الاشتراك بثلاثة أيام وتجديد تلقائي بنقرة واحدة.",
+    title: "دعم فني وتطوير",
+    date: "مستمر",
+    content: "نقدم خدمات الصيانة للبرمجيات، الدعم الفني، والتجديد التلقائي للاشتراكات لضمان راحة بالك.",
     category: "renewal",
     icon: RefreshCw,
     relatedIds: [1, 5],
@@ -73,9 +73,9 @@ const timelineData: TimelineItem[] = [
   },
   {
     id: 7,
-    title: "منتجات عالمية",
-    date: "+50 خدمة",
-    content: "نتفليكس، سبوتيفاي، ChatGPT، Adobe، Microsoft 365 وأكثر من 50 خدمة رقمية عالمية.",
+    title: "خدمات رقمية شاملة",
+    date: "متكاملة",
+    content: "من برمجة المواقع وتصميم الجرافيك والموشن جرافيك، إلى اشتراكات نتفليكس وأهم الخدمات العالمية.",
     category: "catalog",
     icon: Globe,
     relatedIds: [3, 4],

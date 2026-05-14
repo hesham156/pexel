@@ -6,6 +6,7 @@ import { ShoppingBag, MessageSquare, Bell, ArrowLeft, Zap, CheckCircle, Clock } 
 import { formatCurrency, formatDate, getOrderStatusLabel } from "@/lib/utils";
 import { Badge, getStatusBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import AdBanner from "@/components/store/AdBanner";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -38,6 +39,11 @@ export default async function DashboardPage() {
           مرحباً، {session.user.name.split(" ")[0]} 👋
         </h1>
         <p className="text-white/70 text-sm">هذه نظرة عامة على حسابك</p>
+      </div>
+
+      {/* Ads Banners */}
+      <div className="-mx-4 sm:mx-0">
+        <AdBanner placement="DASHBOARD_MAIN" />
       </div>
 
       {/* Stats */}

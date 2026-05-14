@@ -5,8 +5,8 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { ShoppingCart, Star, Zap, Clock, AlertTriangle } from "lucide-react";
 import { useCartStore } from "@/store/cart";
-import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Badge } from "@/components/ui/Badge";
 import toast from "react-hot-toast";
 import type { ProductWithCategory } from "@/types";
@@ -19,6 +19,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, className }: ProductCardProps) {
   const { addItem } = useCartStore();
+  const { formatAmount } = useCurrency();
   const reduced = useReducedMotion();
 
   const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
@@ -143,11 +144,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <div className="flex items-end justify-between mt-3">
             <div>
               <div className="text-xl font-bold text-gray-900 dark:text-white">
-                {formatCurrency(price)}
+                {formatAmount(price)}
               </div>
               {comparePrice && (
                 <div className="text-sm text-gray-400 line-through">
-                  {formatCurrency(comparePrice)}
+                  {formatAmount(comparePrice)}
                 </div>
               )}
             </div>

@@ -4,12 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { X, ShoppingBag, Trash2, Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/store/cart";
-import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { useCurrency } from "@/context/CurrencyContext";
 import { cn } from "@/lib/utils";
 
 export function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore();
+  const { formatAmount } = useCurrency();
   const total = getTotalPrice();
 
   return (
@@ -102,7 +103,7 @@ export function CartSidebar() {
                     {item.nameAr}
                   </p>
                   <p className="text-sm text-primary-600 dark:text-primary-400 font-bold mt-0.5">
-                    {formatCurrency(item.price)}
+                    {formatAmount(item.price)}
                   </p>
 
                   {/* Quantity */}
@@ -141,7 +142,7 @@ export function CartSidebar() {
             <div className="flex items-center justify-between">
               <span className="text-gray-600 dark:text-gray-400 font-medium">الإجمالي</span>
               <span className="text-xl font-bold text-gray-900 dark:text-white">
-                {formatCurrency(total)}
+                {formatAmount(total)}
               </span>
             </div>
             <Link href="/checkout" onClick={closeCart}>

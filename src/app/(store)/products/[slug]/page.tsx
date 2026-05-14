@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { PaymentBadges } from "@/components/store/PaymentBadges";
 import { useCartStore } from "@/store/cart";
-import { formatCurrency, parseProductVariants } from "@/lib/utils";
+import { parseProductVariants } from "@/lib/utils";
+import { useCurrency } from "@/context/CurrencyContext";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import type { ProductWithCategory, ProductVariant } from "@/types";
@@ -23,6 +24,7 @@ interface PublicSettings {
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const { formatAmount } = useCurrency();
   const [product, setProduct] = useState<ProductWithCategory | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -230,11 +232,11 @@ export default function ProductDetailPage() {
                           "text-base font-black",
                           isSelected ? "text-primary-600 dark:text-primary-400" : "text-gray-900 dark:text-white"
                         )}>
-                          {formatCurrency(v.price)}
+                          {formatAmount(v.price)}
                         </span>
                         {v.comparePrice && (
                           <span className="text-xs text-gray-400 line-through">
-                            {formatCurrency(v.comparePrice)}
+                            {formatAmount(v.comparePrice)}
                           </span>
                         )}
                         {isSelected && (
@@ -253,15 +255,15 @@ export default function ProductDetailPage() {
             <div className="flex items-end gap-4">
               <div>
                 <p className="text-4xl font-black text-gray-900 dark:text-white transition-all duration-200">
-                  {formatCurrency(activePrice)}
+                  {formatAmount(activePrice)}
                 </p>
                 {activeComparePrice && (
-                  <p className="text-lg text-gray-400 line-through">{formatCurrency(activeComparePrice)}</p>
+                  <p className="text-lg text-gray-400 line-through">{formatAmount(activeComparePrice)}</p>
                 )}
               </div>
               {discount > 0 && (
                 <div className="mb-1 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm">
-                  وفر {formatCurrency(activeComparePrice! - activePrice)}
+                  وفر {formatAmount(activeComparePrice! - activePrice)}
                 </div>
               )}
             </div>

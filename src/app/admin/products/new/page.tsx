@@ -225,7 +225,7 @@ export default function NewProductPage() {
             <Input label="الترتيب" type="number" value={form.sortOrder} onChange={e => set("sortOrder", e.target.value)} />
           </Card>
 
-          <div className="flex gap-3 justify-end pb-6">
+          <div className="flex xl:hidden gap-3 justify-end pb-6">
             <Button variant="secondary" type="button" onClick={() => router.push("/admin/products")}>إلغاء</Button>
             <Button type="submit" loading={loading}>إنشاء المنتج</Button>
           </div>

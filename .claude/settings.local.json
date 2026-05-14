@@ -14,7 +14,9 @@
       "Bash(git commit *)",
       "Bash(git branch *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(mkdir \"C:\\\\Users\\\\DELL\\\\Desktop\\\\مجلد جديد \\(3\\)\\\\src\\\\app\\\\api\\\\admin\\\\announcements\" 2>nul; mkdir \"C:\\\\Users\\\\DELL\\\\Desktop\\\\مجلد جديد \\(3\\)\\\\src\\\\app\\\\api\\\\admin\\\\announcements\\\\[id]\" 2>nul; mkdir \"C:\\\\Users\\\\DELL\\\\Desktop\\\\مجلد جديد \\(3\\)\\\\src\\\\app\\\\api\\\\announcements\" 2>nul; mkdir \"C:\\\\Users\\\\DELL\\\\Desktop\\\\مجلد جديد \\(3\\)\\\\src\\\\app\\\\admin\\\\announcements\" 2>nul; echo done)",
+      "Bash(xargs wc -l)"
     ]
   }
 }

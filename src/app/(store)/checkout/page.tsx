@@ -7,12 +7,13 @@ import Link from "next/link";
 import { useCartStore } from "@/store/cart";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/context/CurrencyContext";
 import toast from "react-hot-toast";
 import {
   CreditCard, Landmark, Wallet, Tag, CheckCircle2, Upload, Copy, AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AdBanner from "@/components/store/AdBanner";
 
 /* ─── Types ─── */
 interface BankTransfer { enabled: boolean; accountName: string; bankName: string; accountNumber: string; iban: string }
@@ -76,6 +77,7 @@ export default function CheckoutPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const { items, getTotalPrice, clearCart } = useCartStore();
+  const { formatAmount } = useCurrency();
 
   const [gateways, setGateways]         = useState<PaymentMethods | null>(null);
   const [gatewaysLoading, setGatewaysLoading] = useState(true);
@@ -208,7 +210,8 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen py-8">
-      <div className="container-custom max-w-5xl">
+      <AdBanner placement="CHECKOUT_TOP" />
+      <div className="container-custom max-w-5xl mt-4">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">إتمام الشراء</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -256,7 +259,7 @@ export default function CheckoutPage() {
                   {gateways.bankTransfer.accountNumber && (
                     <CopyRow label="رقم الحساب" value={gateways.bankTransfer.accountNumber} />
                   )}
-                  <CopyRow label="المبلغ المطلوب" value={formatCurrency(total)} />
+                  <CopyRow label="المبلغ المطلوب" value={formatAmount(total)} />
                 </div>
 
                 <div className="pt-2">
@@ -298,7 +301,7 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-4 gap-2 mt-3">
                   {[1, 2, 3, 4].map(n => (
                     <div key={n} className="text-center p-2.5 rounded-xl bg-teal-100 dark:bg-teal-900/40">
-                      <p className="text-sm font-bold text-teal-800 dark:text-teal-300">{formatCurrency(total / 4)}</p>
+                      <p className="text-sm font-bold text-teal-800 dark:text-teal-300">{formatAmount(total / 4)}</p>
                       <p className="text-xs text-teal-600 dark:text-teal-500">دفعة {n}</p>
                     </div>
                   ))}
@@ -316,7 +319,7 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-3 gap-2 mt-3">
                   {[1, 2, 3].map(n => (
                     <div key={n} className="text-center p-2.5 rounded-xl bg-cyan-100 dark:bg-cyan-900/40">
-                      <p className="text-sm font-bold text-cyan-800 dark:text-cyan-300">{formatCurrency(total / 3)}</p>
+                      <p className="text-sm font-bold text-cyan-800 dark:text-cyan-300">{formatAmount(total / 3)}</p>
                       <p className="text-xs text-cyan-600 dark:text-cyan-500">دفعة {n}</p>
                     </div>
                   ))}
@@ -335,7 +338,7 @@ export default function CheckoutPage() {
                   <div>
                     <p className="font-bold text-green-700 dark:text-green-300">{coupon.code}</p>
                     <p className="text-sm text-green-600 dark:text-green-400">
-                      خصم {coupon.discountType === "PERCENTAGE" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)}
+                      خصم {coupon.discountType === "PERCENTAGE" ? `${coupon.discountValue}%` : formatAmount(coupon.discountValue)}
                     </p>
                   </div>
                   <button onClick={() => setCoupon(null)} className="text-red-500 hover:text-red-600 text-sm">إزالة</button>
@@ -369,7 +372,7 @@ export default function CheckoutPage() {
                       {item.variantLabel && <span className="block text-xs text-gray-400">{item.variantLabel}</span>}
                     </div>
                     <span className="font-semibold text-gray-900 dark:text-white shrink-0">
-                      {formatCurrency(item.price * item.quantity)}
+                      {formatAmount(item.price * item.quantity)}
                     </span>
                   </div>
                 ))}
@@ -378,17 +381,17 @@ export default function CheckoutPage() {
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">المجموع الفرعي</span>
-                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+                  <span className="font-medium">{formatAmount(subtotal)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
                     <span>خصم الكوبون</span>
-                    <span>- {formatCurrency(discount)}</span>
+                    <span>- {formatAmount(discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                   <span className="text-gray-900 dark:text-white">الإجمالي</span>
-                  <span className="text-primary-600 dark:text-primary-400">{formatCurrency(total)}</span>
+                  <span className="text-primary-600 dark:text-primary-400">{formatAmount(total)}</span>
                 </div>
               </div>
 

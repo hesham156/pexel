@@ -9,6 +9,7 @@ import { ShoppingCart, User, LogOut, LayoutDashboard, Shield, Menu, X, ChevronDo
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CurrencySelector } from "@/components/store/CurrencySelector";
 
 const navLinks = [
   { href: "/",         label: "الرئيسية" },
@@ -81,6 +82,7 @@ export function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            <CurrencySelector />
             <ThemeToggle className="hidden sm:flex" />
 
             {/* Cart */}

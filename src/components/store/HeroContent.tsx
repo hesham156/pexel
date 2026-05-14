@@ -131,19 +131,19 @@ export default function HeroContent() {
         <motion.div variants={item}>
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-sm text-white/80 border border-white/15">
             <Zap className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
-            تسليم فوري لمعظم الاشتراكات
+            تنفيذ احترافي وتسليم سريع للخدمات
           </span>
         </motion.div>
 
         {/* Headline */}
         <motion.h1
           variants={item}
-          className="text-5xl md:text-7xl font-black text-white leading-tight tracking-tight"
+          className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tight"
         >
-          اشتراكاتك الرقمية
+          خدماتك الرقمية المتكاملة
           <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-l from-yellow-400 via-orange-400 to-pink-400">
-            بأفضل الأسعار
+          <span className="mt-2 text-transparent bg-clip-text bg-gradient-to-l from-yellow-400 via-orange-400 to-pink-400">
+            بأعلى جودة وأفضل سعر
           </span>
         </motion.h1>
 
@@ -152,7 +152,7 @@ export default function HeroContent() {
           variants={item}
           className="text-lg text-white/60 max-w-xl mx-auto leading-relaxed"
         >
-          منصتك الموثوقة لشراء نتفليكس، سبوتيفاي، ChatGPT، VPN، وأكثر من 50 خدمة رقمية عالمية بأسعار مناسبة.
+          منصتك الموثوقة لخدمات البرمجة، التصميم الاحترافي، الموشن جرافيك، والاشتراكات الرقمية العالمية بأسعار مناسبة.
         </motion.p>
 
         {/* CTAs */}

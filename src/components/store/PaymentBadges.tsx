@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface PaymentBadgesProps {
   price: number;
@@ -35,6 +35,7 @@ export function PaymentBadges({
   tabbyInstallments = 4,
   tamaraInstallments = 3,
 }: PaymentBadgesProps) {
+  const { formatAmount } = useCurrency();
   if (!tabbyEnabled && !tamaraEnabled) return null;
 
   const tabbyInstallmentPrice = price / tabbyInstallments;
@@ -53,7 +54,7 @@ export function PaymentBadges({
             <div className="min-w-0">
               <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
                 {tabbyInstallments} دفعات ×{" "}
-                <span className="text-[#2eaa94]">{formatCurrency(tabbyInstallmentPrice)}</span>
+                <span className="text-[#2eaa94]">{formatAmount(tabbyInstallmentPrice)}</span>
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">بدون فوائد • بدون رسوم</p>
             </div>
@@ -70,7 +71,7 @@ export function PaymentBadges({
             <div className="min-w-0">
               <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
                 {tamaraInstallments} دفعات ×{" "}
-                <span className="text-[#9b6dc0]">{formatCurrency(tamaraInstallmentPrice)}</span>
+                <span className="text-[#9b6dc0]">{formatAmount(tamaraInstallmentPrice)}</span>
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">بدون فوائد • بدون رسوم</p>
             </div>

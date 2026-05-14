@@ -10,21 +10,23 @@ import { FeaturesTimeline } from "@/components/store/FeaturesTimeline";
 import { ChevronLeft } from "lucide-react";
 import type { ProductWithCategory } from "@/types";
 import { getActiveCategories, getFeaturedProducts, getRecentProducts } from "@/lib/queries";
+import { PromoSection } from "@/components/store/PromoSection";
+import AdBanner from "@/components/store/AdBanner";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
 const siteUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
-const siteName = "متجر الاشتراكات الرقمية";
+const siteName = "منصة الخدمات الرقمية المتكاملة";
 
 export const metadata: Metadata = {
-  title: `اشتر اشتراكات رقمية بأفضل الأسعار | ${siteName}`,
-  description: "منصتك الموثوقة لشراء نتفليكس، سبوتيفاي، ChatGPT، VPN، وأكثر من 50 خدمة رقمية عالمية بأسعار مناسبة مع تسليم فوري.",
-  keywords: ["اشتراكات رقمية", "نتفليكس", "سبوتيفاي", "ChatGPT", "VPN", "اشتراك نتفليكس رخيص"],
+  title: `خدماتك الرقمية واشتراكاتك بأفضل الأسعار | ${siteName}`,
+  description: "منصتك الموثوقة لخدمات البرمجة، التصميم، الموشن جرافيك، والاشتراكات الرقمية العالمية بأفضل الأسعار مع تسليم فوري.",
+  keywords: ["خدمات رقمية", "برمجة", "تصميم", "موشن جرافيك", "اشتراكات رقمية", "تطوير مواقع"],
   alternates: { canonical: siteUrl },
   openGraph: {
     title: siteName,
-    description: "منصتك الموثوقة لشراء اشتراكات رقمية بأسعار تنافسية مع تسليم فوري.",
+    description: "منصتك الموثوقة لخدمات البرمجة والتصميم والاشتراكات الرقمية بأفضل الأسعار.",
     url: siteUrl, locale: "ar_SA", type: "website",
     images: [{ url: `${siteUrl}/og-image.png`, width: 1200, height: 630, alt: siteName }],
   },
@@ -43,6 +45,9 @@ export default async function HomePage() {
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <HeroContent />
+
+      {/* ── Top Ads ──────────────────────────────────────────────────── */}
+      <AdBanner placement="STORE_HOME_TOP" />
 
       {/* ── Categories ───────────────────────────────────────────────── */}
       <section className="py-16 bg-white dark:bg-gray-900">
@@ -85,6 +90,9 @@ export default async function HomePage() {
           </StaggerContainer>
         </div>
       </section>
+
+      {/* ── Promos & Coupons ──────────────────────────────────────────── */}
+      <PromoSection />
 
       {/* ── Featured Products ─────────────────────────────────────────── */}
       {featured.length > 0 && (
@@ -143,6 +151,9 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* ── Bottom Ads ────────────────────────────────────────────────── */}
+      <AdBanner placement="STORE_HOME_BOTTOM" />
+
       {/* ── CTA ──────────────────────────────────────────────────────── */}
       <section className="py-16 bg-gradient-to-r from-primary-600 to-purple-600 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
@@ -150,7 +161,7 @@ export default async function HomePage() {
           <AnimatedSection>
             <h2 className="text-3xl font-black text-white mb-4">جاهز للبدء؟</h2>
             <p className="text-white/80 mb-8 text-lg max-w-xl mx-auto">
-              سجل حساباً مجانياً الآن واستمتع بأفضل الاشتراكات الرقمية
+              سجل حساباً مجانياً الآن واستفد من خدماتنا الرقمية الشاملة واشتراكاتنا المميزة
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link

@@ -4,11 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft } from "lucide-react";
 import { useCartStore } from "@/store/cart";
-import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore();
+  const { formatAmount } = useCurrency();
   const total = getTotalPrice();
 
   if (items.length === 0) {
@@ -64,9 +65,9 @@ export default function CartPage() {
                     </h3>
                   </Link>
                   <p className="text-primary-600 dark:text-primary-400 font-bold text-lg mt-1">
-                    {formatCurrency(item.price * item.quantity)}
+                    {formatAmount(item.price * item.quantity)}
                   </p>
-                  <p className="text-xs text-gray-400">{formatCurrency(item.price)} × {item.quantity}</p>
+                  <p className="text-xs text-gray-400">{formatAmount(item.price)} × {item.quantity}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -108,7 +109,7 @@ export default function CartPage() {
                       {item.nameAr} × {item.quantity}
                     </span>
                     <span className="font-medium text-gray-900 dark:text-white shrink-0">
-                      {formatCurrency(item.price * item.quantity)}
+                      {formatAmount(item.price * item.quantity)}
                     </span>
                   </div>
                 ))}
@@ -118,7 +119,7 @@ export default function CartPage() {
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-gray-900 dark:text-white text-lg">الإجمالي</span>
                   <span className="font-black text-primary-600 dark:text-primary-400 text-2xl">
-                    {formatCurrency(total)}
+                    {formatAmount(total)}
                   </span>
                 </div>
               </div>
