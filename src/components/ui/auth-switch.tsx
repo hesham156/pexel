@@ -81,8 +81,7 @@ export function AuthSwitch({ defaultMode = "login" }: AuthSwitchProps) {
       }
 
       toast.success("تم تسجيل الدخول بنجاح!");
-      router.push(redirect);
-      router.refresh();
+      window.location.href = redirect;
     } catch {
       setLoginError("انتهت مهلة الاتصال. تحقق من اتصالك وحاول مجدداً");
       setLoginLoading(false);
