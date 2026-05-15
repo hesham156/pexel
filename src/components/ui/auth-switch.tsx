@@ -33,7 +33,8 @@ const perks = [
 export function AuthSwitch({ defaultMode = "login" }: AuthSwitchProps) {
   const router      = useRouter();
   const searchParams = useSearchParams();
-  const redirect    = searchParams.get("redirect") || "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/dashboard";
+  const redirect    = callbackUrl.startsWith("http") ? new URL(callbackUrl).pathname : callbackUrl;
 
   const [mode, setMode] = useState<Mode>(defaultMode);
 
@@ -57,25 +58,35 @@ export function AuthSwitch({ defaultMode = "login" }: AuthSwitchProps) {
     setLoginError("");
     setLoginLoading(true);
 
-    const result = await signIn("credentials", {
-      email: loginForm.email,
-      password: loginForm.password,
-      redirect: false,
-    });
+    try {
+      const result = await Promise.race([
+        signIn("credentials", {
+          email: loginForm.email,
+          password: loginForm.password,
+          redirect: false,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 15000)
+        ),
+      ]);
 
-    if (result?.error) {
-      setLoginError(
-        result.error === "CredentialsSignin"
-          ? "البريد الإلكتروني أو كلمة المرور غير صحيحة"
-          : result.error
-      );
+      if (!result?.ok) {
+        setLoginError(
+          result?.error === "CredentialsSignin"
+            ? "البريد الإلكتروني أو كلمة المرور غير صحيحة"
+            : result?.error || "حدث خطأ في تسجيل الدخول"
+        );
+        setLoginLoading(false);
+        return;
+      }
+
+      toast.success("تم تسجيل الدخول بنجاح!");
+      router.push(redirect);
+      router.refresh();
+    } catch {
+      setLoginError("انتهت مهلة الاتصال. تحقق من اتصالك وحاول مجدداً");
       setLoginLoading(false);
-      return;
     }
-
-    toast.success("تم تسجيل الدخول بنجاح!");
-    router.push(redirect);
-    router.refresh();
   };
 
   const validateReg = () => {
