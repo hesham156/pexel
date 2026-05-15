@@ -1,7 +1,8 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
-const siteUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
+const rawUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
+const siteUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages

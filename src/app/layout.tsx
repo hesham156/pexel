@@ -19,7 +19,8 @@ const cairo = Cairo({
   preload: true,
 });
 
-const siteUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
+const rawUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
+const siteUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
 const siteName = "متجر الاشتراكات الرقمية";
 const siteDesc = "منصة رائدة لبيع الاشتراكات الرقمية - نتفليكس، سبوتيفاي، ChatGPT، VPN، برامج وألعاب بأفضل الأسعار في السعودية والخليج";
 

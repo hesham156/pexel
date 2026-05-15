@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 
-const siteUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
+const rawUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
+const siteUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`;
 
 export default function robots(): MetadataRoute.Robots {
   return {
