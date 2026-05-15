@@ -2,7 +2,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { Plus, Image as ImageIcon, Link as LinkIcon, Users, Edit, Trash2 } from "lucide-react";
+import { Plus, Image as ImageIcon, Link as LinkIcon, Users, Edit } from "lucide-react";
+import { DeleteAdButton } from "./DeleteAdButton";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { redirect } from "next/navigation";
@@ -53,7 +54,7 @@ export default async function AdminAdsPage() {
                   <ImageIcon className="w-10 h-10 text-gray-400" />
                 )}
                 <div className="absolute top-3 right-3 flex gap-2">
-                  <Badge variant={ad.isActive ? "success" : "neutral"}>
+                  <Badge variant={ad.isActive ? "success" : "gray"}>
                     {ad.isActive ? "نشط" : "معطل"}
                   </Badge>
                   <Badge variant="primary" className="bg-primary-500 text-white">
@@ -91,10 +92,7 @@ export default async function AdminAdsPage() {
                     <Edit className="w-4 h-4" />
                     تعديل
                   </Link>
-                  <button className="text-sm font-medium text-red-600 hover:text-red-700 flex items-center gap-1">
-                    <Trash2 className="w-4 h-4" />
-                    حذف
-                  </button>
+                  <DeleteAdButton id={ad.id} />
                 </div>
               </div>
             </Card>

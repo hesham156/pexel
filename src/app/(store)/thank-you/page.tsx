@@ -1,0 +1,333 @@
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  CheckCircle2, Package, Mail, Clock, ArrowRight,
+  ShoppingBag, Headphones, Star, Copy, Check,
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import confetti from "canvas-confetti";
+
+/* ─── Confetti helper ─── */
+function fireConfetti() {
+  const count = 180;
+  const defaults = { origin: { y: 0.6 }, zIndex: 9999 };
+  function fire(particleRatio: number, opts: confetti.Options) {
+    confetti({ ...defaults, ...opts, particleCount: Math.floor(count * particleRatio) });
+  }
+  fire(0.25, { spread: 26, startVelocity: 55 });
+  fire(0.2,  { spread: 60 });
+  fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+  fire(0.1,  { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+  fire(0.1,  { spread: 120, startVelocity: 45 });
+}
+
+/* ─── Floating particle ─── */
+function Particle({ delay, x, size }: { delay: number; x: number; size: number }) {
+  return (
+    <motion.div
+      className="absolute rounded-full opacity-0 pointer-events-none"
+      style={{
+        width: size,
+        height: size,
+        left: `${x}%`,
+        bottom: "10%",
+        background: `hsl(${Math.random() * 60 + 250}, 80%, 65%)`,
+      }}
+      animate={{
+        y: [0, -300, -600],
+        x: [0, (Math.random() - 0.5) * 80],
+        opacity: [0, 0.8, 0],
+        rotate: [0, 360],
+        scale: [1, 1.3, 0.5],
+      }}
+      transition={{
+        duration: 2.5,
+        delay,
+        ease: "easeOut",
+        repeat: Infinity,
+        repeatDelay: Math.random() * 3 + 2,
+      }}
+    />
+  );
+}
+
+/* ─── Steps timeline ─── */
+const STEPS = [
+  {
+    icon: Mail,
+    color: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+    label: "تأكيد عبر الإيميل",
+    desc: "تم إرسال تفاصيل طلبك إلى بريدك الإلكتروني",
+    done: true,
+  },
+  {
+    icon: Package,
+    color: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+    label: "مراجعة الطلب",
+    desc: "يتم مراجعة طلبك والتحقق من الدفع",
+    done: false,
+  },
+  {
+    icon: CheckCircle2,
+    color: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+    label: "التسليم",
+    desc: "ستحصل على بياناتك فوراً عند اكتمال المراجعة",
+    done: false,
+  },
+];
+
+/* ─── Copy button ─── */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      onClick={copy}
+      className="flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 transition-colors"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "تم النسخ!" : "نسخ"}
+    </button>
+  );
+}
+
+export default function ThankYouPage() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const { data: session } = useSession();
+  const orderId  = params.get("order") ?? "";
+  const orderNum = params.get("num")   ?? "";
+  const firedRef = useRef(false);
+
+  /* Fire confetti once on mount */
+  useEffect(() => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    const t = setTimeout(fireConfetti, 400);
+    return () => clearTimeout(t);
+  }, []);
+
+  /* If no order in URL, redirect home */
+  useEffect(() => {
+    if (!orderId && !orderNum) router.replace("/");
+  }, [orderId, orderNum, router]);
+
+  /* Floating particles */
+  const particles = Array.from({ length: 12 }, (_, i) => ({
+    delay: i * 0.3,
+    x: Math.random() * 90 + 5,
+    size: Math.random() * 8 + 4,
+  }));
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-primary-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-primary-950/20 flex items-center justify-center py-16 px-4 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary-500/10 dark:bg-primary-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {particles.map((p, i) => (
+          <Particle key={i} {...p} />
+        ))}
+      </div>
+
+      {/* Main card */}
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 w-full max-w-lg"
+      >
+        {/* Success checkmark */}
+        <div className="flex justify-center mb-8">
+          <motion.div
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
+            className="relative"
+          >
+            {/* Outer ring */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+              className="absolute inset-0 rounded-full bg-green-400/20 dark:bg-green-400/10 scale-150 animate-pulse"
+            />
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-2xl shadow-green-500/30">
+              <motion.div
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <CheckCircle2 className="h-14 w-14 text-white" strokeWidth={1.8} />
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Card body */}
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl shadow-gray-200/60 dark:shadow-gray-900/60 overflow-hidden border border-gray-100 dark:border-gray-800">
+
+          {/* Header */}
+          <div className="px-8 pt-8 pb-6 text-center border-b border-gray-100 dark:border-gray-800">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="flex justify-center gap-1 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5 + i * 0.08 }}
+                  >
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  </motion.div>
+                ))}
+              </div>
+              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">
+                شكراً لك! 🎉
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                تم استلام طلبك بنجاح وسيتم معالجته في أقرب وقت
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Order number */}
+          {orderNum && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="mx-6 my-5 flex items-center justify-between gap-4 px-4 py-3.5 rounded-2xl bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800"
+            >
+              <div>
+                <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">رقم الطلب</p>
+                <p className="font-black text-primary-800 dark:text-primary-200 text-lg tracking-wide font-mono">
+                  #{orderNum}
+                </p>
+              </div>
+              <CopyButton text={orderNum} />
+            </motion.div>
+          )}
+
+          {/* Steps timeline */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="px-6 pb-6 space-y-3"
+          >
+            <p className="text-xs font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider mb-4">
+              ما يحدث الآن
+            </p>
+            {STEPS.map((step, i) => {
+              const Icon = step.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.75 + i * 0.1 }}
+                  className="flex items-start gap-3"
+                >
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${step.color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 pt-0.5">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{step.label}</p>
+                      {step.done && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                          تم ✓
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{step.desc}</p>
+                  </div>
+                  {/* Connector */}
+                  {i < STEPS.length - 1 && (
+                    <div className="absolute translate-x-[17px] translate-y-9 w-px h-6 bg-gray-200 dark:bg-gray-700" />
+                  )}
+                </motion.div>
+              );
+            })}
+          </motion.div>
+
+          {/* Info row */}
+          <div className="mx-6 mb-6 flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-100 dark:border-amber-800/40">
+            <Clock className="h-4 w-4 text-amber-500 shrink-0" />
+            <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+              التسليم التلقائي فوري — أو يدوياً خلال <span className="font-bold">1-24 ساعة</span> حسب نوع المنتج
+            </p>
+          </div>
+
+          {/* Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.0 }}
+            className="px-6 pb-8 space-y-3"
+          >
+            {session && orderId ? (
+              <Link href={`/dashboard/orders/${orderId}`}>
+                <Button fullWidth size="lg" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  تتبع طلبك
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/dashboard/orders">
+                <Button fullWidth size="lg" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  عرض طلباتي
+                </Button>
+              </Link>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <Link href="/products">
+                <Button fullWidth variant="outline" size="md" className="gap-1.5">
+                  <ShoppingBag className="h-4 w-4" />
+                  تسوق المزيد
+                </Button>
+              </Link>
+              <Link href="/dashboard/tickets">
+                <Button fullWidth variant="outline" size="md" className="gap-1.5">
+                  <Headphones className="h-4 w-4" />
+                  الدعم الفني
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Footer note */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+          className="text-center text-xs text-gray-400 dark:text-gray-600 mt-5"
+        >
+          هل واجهت مشكلة؟{" "}
+          <Link href="/contact" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+            تواصل معنا
+          </Link>
+        </motion.p>
+      </motion.div>
+    </div>
+  );
+}

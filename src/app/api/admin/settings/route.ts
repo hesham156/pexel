@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, serverError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  if (!await requireAdmin()) return unauthorized();
 
   const settings = await prisma.setting.findMany({ orderBy: { group: "asc" } });
   return NextResponse.json({ success: true, data: settings });
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
+
+  // Only ADMIN (not STAFF) can update settings
+  if (session.user.role !== "ADMIN") return unauthorized();
 
   try {
     const { settings } = await req.json();
@@ -33,7 +30,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+  } catch (err) {
+    return serverError("PATCH /api/admin/settings", err);
   }
 }

@@ -1,30 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, serverError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isAdmin(session: any) {
-  return session && (session.user?.role === "ADMIN" || session.user?.role === "STAFF");
-}
-
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!isAdmin(session)) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+  if (!await requireAdmin()) return unauthorized();
 
-  const rows = await (prisma as any).announcement.findMany({ orderBy: { sortOrder: "asc" } });
+  const rows = await prisma.announcement.findMany({ orderBy: { sortOrder: "asc" } });
   return NextResponse.json({ success: true, data: rows });
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!isAdmin(session)) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+  if (!await requireAdmin()) return unauthorized();
 
   try {
     const body = await req.json();
-    const row = await (prisma as any).announcement.create({
+    const row = await prisma.announcement.create({
       data: {
         titleAr:    body.titleAr,
         type:       body.type       || "INFO",
@@ -38,7 +30,7 @@ export async function POST(req: NextRequest) {
       },
     });
     return NextResponse.json({ success: true, data: row });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+  } catch (err) {
+    return serverError("POST /api/admin/announcements", err);
   }
 }

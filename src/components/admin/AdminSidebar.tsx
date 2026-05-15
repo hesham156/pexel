@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { SiteLogo } from "@/components/ui/site-logo";
 import {
   LayoutDashboard, Package, Tag, ShoppingBag, Users, CreditCard, Archive,
-  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck, BookOpen, Megaphone,
+  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck, BookOpen, Megaphone, TrendingUp, Bell, Calculator, TrendingDown, Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,8 @@ const navGroups = [
       { href: "/admin/coupons",        label: "الكوبونات",         icon: TicketPercent },
       { href: "/admin/announcements",  label: "الإعلانات والعروض", icon: Megaphone },
       { href: "/admin/ads",            label: "البنرات الإعلانية", icon: Tag },
+      { href: "/admin/popups",         label: "البوب آب",           icon: Bell },
+      { href: "/admin/upsells",        label: "عروض Upsell",        icon: TrendingUp },
     ],
   },
   {
@@ -41,6 +43,14 @@ const navGroups = [
     label: "المحتوى",
     items: [
       { href: "/admin/blog", label: "المقالات", icon: BookOpen },
+    ],
+  },
+  {
+    label: "المالية",
+    items: [
+      { href: "/admin/accounting",           label: "لوحة المحاسبة",    icon: Calculator },
+      { href: "/admin/accounting/expenses",  label: "المصاريف",         icon: TrendingDown },
+      { href: "/admin/accounting/invoices",  label: "الفواتير الضريبية", icon: Receipt },
     ],
   },
   {

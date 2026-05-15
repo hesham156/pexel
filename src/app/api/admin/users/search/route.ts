@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, serverError } from "@/lib/api";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q");
@@ -33,8 +29,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ users });
-  } catch (error: any) {
-    console.error("Users Search GET Error:", error);
-    return NextResponse.json({ error: "Failed to search users" }, { status: 500 });
+  } catch (err) {
+    return serverError("GET /api/admin/users/search", err);
   }
 }

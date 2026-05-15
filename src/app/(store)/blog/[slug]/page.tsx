@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 import { formatDistanceToNow, format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Clock, Eye, Calendar, Tag, ChevronLeft, User } from "lucide-react";
@@ -69,6 +70,11 @@ export async function generateStaticParams() {
   return posts.map((p) => ({ slug: p.slug }));
 }
 
+const renderer = new marked.Renderer();
+renderer.heading = ({ text, depth }: { text: string; depth: number }) => {
+  const id = text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
+  return `<h${depth} id="${id}">${text}</h${depth}>\n`;
+};
 marked.setOptions({ breaks: true });
 
 function extractHeadings(markdown: string) {
@@ -97,7 +103,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     getRelated(post.id, post.categoryId),
   ]);
 
-  const htmlContent = await marked(post.contentAr);
+  const htmlContent = DOMPurify.sanitize(await marked(post.contentAr, { renderer }));
   const headings = extractHeadings(post.contentAr);
   const siteUrl = process.env.NEXTAUTH_URL || "https://yourstore.com";
 

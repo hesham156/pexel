@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, notFound, badRequest, serverError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
 
   try {
     const { action, adminNotes } = await req.json();
@@ -18,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       include: { payment: true, items: { include: { product: true } }, user: true },
     });
 
-    if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
+    if (!order) return notFound("الطلب غير موجود");
 
     if (action === "approve") {
       // Update payment
@@ -133,9 +130,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ success: true, data: updatedOrder });
     }
 
-    return NextResponse.json({ success: false, error: "إجراء غير صالح" }, { status: 400 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+    return badRequest("إجراء غير صالح");
+  } catch (err) {
+    return serverError("PATCH /api/admin/orders/[id]/payment", err);
   }
 }

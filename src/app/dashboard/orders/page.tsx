@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge, getStatusBadge } from "@/components/ui/Badge";
@@ -9,7 +10,7 @@ import { Card } from "@/components/ui/Card";
 
 export default async function OrdersPage() {
   const session = await getServerSession(authOptions);
-  if (!session) return null;
+  if (!session) redirect("/login");
 
   const orders = await prisma.order.findMany({
     where: { userId: session.user.id },

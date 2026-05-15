@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const now = new Date();
-    const announcements = await (prisma as any).announcement.findMany({
+    const announcements = await prisma.announcement.findMany({
       where: {
         isActive: true,
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, notFound, serverError } from "@/lib/api";
 
 function calcReadingTime(content: string) {
   const words = content.trim().split(/\s+/).length;
@@ -10,36 +9,29 @@ function calcReadingTime(content: string) {
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     const post = await prisma.post.findUnique({
       where: { id: params.id },
       include: { author: { select: { id: true, name: true } }, category: true },
     });
 
-    if (!post) return NextResponse.json({ success: false, error: "المقال غير موجود" }, { status: 404 });
+    if (!post) return notFound("المقال غير موجود");
     return NextResponse.json({ success: true, data: post });
-  } catch (error) {
-    console.error("[GET /api/admin/blog/posts/:id]", error);
-    return NextResponse.json({ success: false, error: "حدث خطأ في الخادم" }, { status: 500 });
+  } catch (err) {
+    return serverError("GET /api/admin/blog/posts/[id]", err);
   }
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     const body = await req.json();
     const { content, contentAr, status, ...rest } = body;
 
     const existing = await prisma.post.findUnique({ where: { id: params.id } });
-    if (!existing) return NextResponse.json({ success: false, error: "المقال غير موجود" }, { status: 404 });
+    if (!existing) return notFound("المقال غير موجود");
 
     const wasPublished = existing.status === "PUBLISHED";
     const nowPublished = status === "PUBLISHED";
@@ -58,23 +50,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     });
 
     return NextResponse.json({ success: true, data: post });
-  } catch (error) {
-    console.error("[PATCH /api/admin/blog/posts/:id]", error);
-    return NextResponse.json({ success: false, error: "حدث خطأ في الخادم" }, { status: 500 });
+  } catch (err) {
+    return serverError("PATCH /api/admin/blog/posts/[id]", err);
   }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     await prisma.post.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[DELETE /api/admin/blog/posts/:id]", error);
-    return NextResponse.json({ success: false, error: "حدث خطأ في الخادم" }, { status: 500 });
+  } catch (err) {
+    return serverError("DELETE /api/admin/blog/posts/[id]", err);
   }
 }

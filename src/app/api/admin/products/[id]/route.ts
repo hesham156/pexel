@@ -1,32 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, notFound, serverError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-async function requireAdmin(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) return null;
-  return session;
-}
-
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await requireAdmin(req);
-  if (!session) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+  if (!await requireAdmin()) return unauthorized();
 
   const product = await prisma.product.findUnique({
     where: { id: params.id },
     include: { category: true },
   });
 
-  if (!product) return NextResponse.json({ success: false, error: "المنتج غير موجود" }, { status: 404 });
+  if (!product) return notFound("المنتج غير موجود");
   return NextResponse.json({ success: true, data: product });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await requireAdmin(req);
-  if (!session) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
 
   try {
     const body = await req.json();
@@ -45,8 +37,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.deliveryMethod !== undefined) data.deliveryMethod = body.deliveryMethod;
     if (body.isActive    !== undefined) data.isActive     = body.isActive;
     if (body.isFeatured  !== undefined) data.isFeatured   = body.isFeatured;
-    if (body.features    !== undefined) data.features     = body.features || [];
-    if (body.tags        !== undefined) data.tags         = body.tags || [];
+    if (body.features    !== undefined) data.features     = body.features    || [];
+    if (body.featuresAr  !== undefined) data.featuresAr   = body.featuresAr  || [];
+    if (body.tags        !== undefined) data.tags         = body.tags        || [];
     if (body.image       !== undefined) data.image        = body.image || null;
     if (body.sortOrder   !== undefined) data.sortOrder    = body.sortOrder ?? 0;
 
@@ -61,14 +54,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     });
 
     return NextResponse.json({ success: true, data: product });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+  } catch (err) {
+    return serverError("PATCH /api/admin/products/[id]", err);
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await requireAdmin(req);
-  if (!session) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
 
   try {
     const product = await prisma.product.findUnique({
@@ -76,9 +69,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       include: { orderItems: true }
     });
 
-    if (!product) {
-      return NextResponse.json({ success: false, error: "المنتج غير موجود" }, { status: 404 });
-    }
+    if (!product) return notFound("المنتج غير موجود");
 
     if (product.orderItems.length > 0) {
       // Soft delete product if it has orders
@@ -100,8 +91,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       data: { userId: session.user.id, action: "DELETE_PRODUCT", entity: "Product", entityId: params.id },
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+  } catch (err) {
+    return serverError("DELETE /api/admin/products/[id]", err);
   }
 }

@@ -1,20 +1,304 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
-import React from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { Settings, Save, BarChart2, CreditCard } from "lucide-react";
+import {
+  Settings, Save, CreditCard, BarChart2, ShoppingBag,
+  Globe, AlertCircle, TrendingUp, Bell, Clock, Eye,
+  ShoppingCart, Gift, Shield, Flame, Calculator,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
-interface Setting { key: string; value: string; label?: string; labelAr?: string; type: string; group: string }
+interface Setting {
+  key: string;
+  value: string;
+  label?: string;
+  labelAr?: string;
+  description?: string;
+  type: string;
+  group: string;
+}
+
+const GROUP_META: Record<string, {
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+  color: string;
+}> = {
+  general: {
+    label: "عام",
+    icon: <Globe className="h-4 w-4" />,
+    description: "اسم المتجر، العملة، ومعلومات التواصل الأساسية",
+    color: "text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/20",
+  },
+  payment: {
+    label: "الدفع البنكي",
+    icon: <CreditCard className="h-4 w-4" />,
+    description: "بيانات الحساب البنكي التي تظهر للعملاء عند الدفع بالتحويل",
+    color: "text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20",
+  },
+  payments: {
+    label: "Tabby / Tamara",
+    icon: <CreditCard className="h-4 w-4" />,
+    description: "فعّل خيارات التقسيط لعرض شارات الدفع تلقائياً على صفحات المنتجات",
+    color: "text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20",
+  },
+  orders: {
+    label: "الطلبات",
+    icon: <ShoppingBag className="h-4 w-4" />,
+    description: "إعدادات معالجة الطلبات والتسليم التلقائي",
+    color: "text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20",
+  },
+  tracking: {
+    label: "التتبع والإعلانات",
+    icon: <BarChart2 className="h-4 w-4" />,
+    description: "بكسلات فيسبوك، جوجل تاج ماناجر وغيرها — تُحقن تلقائياً في جميع الصفحات",
+    color: "text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-900/20",
+  },
+  conversion: {
+    label: "تحسين التحويل",
+    icon: <TrendingUp className="h-4 w-4" />,
+    description: "أدوات FOMO والإلحاح لتشجيع العملاء على اتخاذ قرار الشراء بسرعة",
+    color: "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20",
+  },
+  accounting: {
+    label: "المحاسبة والضريبة",
+    icon: <Calculator className="h-4 w-4" />,
+    description: "إعدادات ضريبة القيمة المضافة، الرقم الضريبي، وبيانات الشركة للفواتير",
+    color: "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20",
+  },
+};
+
+// Conversion features definition — each card groups related keys
+const CONVERSION_FEATURES = [
+  {
+    id: "live_activity",
+    icon: <Bell className="h-4 w-4" />,
+    emoji: "🔔",
+    label: "إشعارات النشاط المباشر",
+    desc: "يعرض إشعارات شراء تلقائية في الزاوية السفلية لإثبات الشعبية (Social Proof)",
+    color: "border-green-200 dark:border-green-800",
+    headerColor: "bg-green-50 dark:bg-green-900/20",
+    iconColor: "text-green-600 dark:text-green-400",
+    enableKey: "live_activity_enabled",
+    keys: ["live_activity_enabled", "live_activity_interval", "live_activity_names", "live_activity_cities"],
+  },
+  {
+    id: "flash_sale",
+    icon: <Clock className="h-4 w-4" />,
+    emoji: "⏰",
+    label: "عداد العرض المحدود",
+    desc: "عداد تنازلي على صفحة المنتج يخلق إحساساً بالإلحاح ويقلل التردد",
+    color: "border-red-200 dark:border-red-800",
+    headerColor: "bg-red-50 dark:bg-red-900/20",
+    iconColor: "text-red-600 dark:text-red-400",
+    enableKey: "flash_sale_enabled",
+    keys: ["flash_sale_enabled", "flash_sale_ends_at", "flash_sale_label"],
+  },
+  {
+    id: "scarcity",
+    icon: <Flame className="h-4 w-4" />,
+    emoji: "🔥",
+    label: "مؤشر الندرة",
+    desc: "يعرض شريط المخزون المتبقي على صفحة المنتج لتحفيز الشراء السريع",
+    color: "border-orange-200 dark:border-orange-800",
+    headerColor: "bg-orange-50 dark:bg-orange-900/20",
+    iconColor: "text-orange-600 dark:text-orange-400",
+    enableKey: "scarcity_enabled",
+    keys: ["scarcity_enabled", "scarcity_max"],
+  },
+  {
+    id: "live_viewers",
+    icon: <Eye className="h-4 w-4" />,
+    emoji: "👁",
+    label: "عداد المشاهدين الحاليين",
+    desc: "يعرض عدد الأشخاص المتواجدين على صفحة المنتج — يرفع الثقة ويخلق التنافس",
+    color: "border-blue-200 dark:border-blue-800",
+    headerColor: "bg-blue-50 dark:bg-blue-900/20",
+    iconColor: "text-blue-600 dark:text-blue-400",
+    enableKey: "live_viewers_enabled",
+    keys: ["live_viewers_enabled", "live_viewers_min", "live_viewers_max"],
+  },
+  {
+    id: "sticky_cta",
+    icon: <ShoppingCart className="h-4 w-4" />,
+    emoji: "📌",
+    label: "زر الشراء الثابت",
+    desc: "يظهر زر 'أضف للسلة' ثابتاً أسفل الشاشة عند التمرير — يقلل الاحتكاك",
+    color: "border-primary-200 dark:border-primary-800",
+    headerColor: "bg-primary-50 dark:bg-primary-900/20",
+    iconColor: "text-primary-600 dark:text-primary-400",
+    enableKey: "sticky_cta_enabled",
+    keys: ["sticky_cta_enabled"],
+  },
+  {
+    id: "cart_progress",
+    icon: <Gift className="h-4 w-4" />,
+    emoji: "🎁",
+    label: "شريط تقدم السلة",
+    desc: "يعرض شريطاً في السلة يحفز العميل على إضافة منتجات للحصول على مكافأة",
+    color: "border-purple-200 dark:border-purple-800",
+    headerColor: "bg-purple-50 dark:bg-purple-900/20",
+    iconColor: "text-purple-600 dark:text-purple-400",
+    enableKey: "cart_progress_enabled",
+    keys: ["cart_progress_enabled", "cart_progress_target", "cart_progress_reward", "cart_progress_coupon"],
+  },
+  {
+    id: "guarantee",
+    icon: <Shield className="h-4 w-4" />,
+    emoji: "🛡",
+    label: "رسالة الضمان",
+    desc: "نص الضمان الذي يظهر أسفل زر الشراء — يزيد الثقة ويقلل المخاوف",
+    color: "border-teal-200 dark:border-teal-800",
+    headerColor: "bg-teal-50 dark:bg-teal-900/20",
+    iconColor: "text-teal-600 dark:text-teal-400",
+    enableKey: "guarantee_enabled",
+    keys: ["guarantee_enabled", "guarantee_text"],
+  },
+];
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+        checked ? "bg-primary-600" : "bg-gray-300 dark:bg-gray-600"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  );
+}
+
+function SettingRow({
+  setting,
+  value,
+  isChanged,
+  onChange,
+}: {
+  setting: Setting;
+  value: string;
+  isChanged: boolean;
+  onChange: (v: string) => void;
+}) {
+  const label = setting.labelAr || setting.label || setting.key;
+  return (
+    <div className={`px-4 py-3 transition-colors rounded-xl ${isChanged ? "bg-amber-50 dark:bg-amber-900/10 ring-1 ring-amber-200 dark:ring-amber-800" : ""}`}>
+      {setting.type === "boolean" ? (
+        <div className="flex items-center justify-between gap-4">
+          <p className="font-medium text-sm text-gray-900 dark:text-white">{label}</p>
+          <Toggle checked={value === "true"} onChange={(v) => onChange(String(v))} />
+        </div>
+      ) : (
+        <Input
+          label={label}
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          hint={setting.description}
+        />
+      )}
+    </div>
+  );
+}
+
+function ConversionPanel({
+  settings,
+  values,
+  saved,
+  set,
+}: {
+  settings: Setting[];
+  values: Record<string, string>;
+  saved: Record<string, string>;
+  set: (k: string, v: string) => void;
+}) {
+  const byKey = Object.fromEntries(settings.map((s) => [s.key, s]));
+
+  return (
+    <div className="space-y-4">
+      {CONVERSION_FEATURES.map((feature) => {
+        const isEnabled = values[feature.enableKey] === "true";
+        const hasChanges = feature.keys.some((k) => values[k] !== saved[k]);
+        const subKeys = feature.keys.filter((k) => k !== feature.enableKey);
+
+        return (
+          <div
+            key={feature.id}
+            className={`rounded-2xl border-2 overflow-hidden transition-all duration-200 ${
+              hasChanges
+                ? "border-amber-300 dark:border-amber-700"
+                : feature.color
+            }`}
+          >
+            {/* Feature header */}
+            <div className={`flex items-center justify-between gap-4 px-5 py-4 ${feature.headerColor}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-xl bg-white dark:bg-gray-900/40 flex items-center justify-center shadow-sm shrink-0 ${feature.iconColor}`}>
+                  {feature.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{feature.emoji}</span>
+                    <p className="font-bold text-sm text-gray-900 dark:text-white">{feature.label}</p>
+                    {hasChanges && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
+                        تغييرات
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{feature.desc}</p>
+                </div>
+              </div>
+              {/* Main toggle */}
+              {byKey[feature.enableKey] && (
+                <Toggle
+                  checked={isEnabled}
+                  onChange={(v) => set(feature.enableKey, String(v))}
+                />
+              )}
+            </div>
+
+            {/* Sub-settings — only show when feature is enabled AND has sub-keys */}
+            {isEnabled && subKeys.length > 0 && (
+              <div className="px-4 py-3 space-y-2 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+                {subKeys.map((key) => {
+                  const s = byKey[key];
+                  if (!s) return null;
+                  return (
+                    <SettingRow
+                      key={key}
+                      setting={s}
+                      value={values[key] ?? ""}
+                      isChanged={values[key] !== saved[key]}
+                      onChange={(v) => set(key, v)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Setting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState<Record<string, string>>({});
+  const [activeGroup, setActiveGroup] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -25,9 +309,18 @@ export default function AdminSettingsPage() {
           const vals: Record<string, string> = {};
           data.data.forEach((s: Setting) => { vals[s.key] = s.value; });
           setValues(vals);
+          setSaved({ ...vals });
+          const firstGroup = data.data[0]?.group ?? "";
+          setActiveGroup(firstGroup);
         }
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  const isDirty = JSON.stringify(values) !== JSON.stringify(saved);
+
+  const set = useCallback((key: string, val: string) => {
+    setValues((prev) => ({ ...prev, [key]: val }));
   }, []);
 
   const handleSave = async () => {
@@ -38,86 +331,178 @@ export default function AdminSettingsPage() {
       body: JSON.stringify({ settings: values }),
     });
     const data = await res.json();
-    if (data.success) toast.success("تم حفظ الإعدادات");
-    else toast.error(data.error || "حدث خطأ");
+    if (data.success) {
+      toast.success("تم حفظ الإعدادات بنجاح");
+      setSaved({ ...values });
+    } else {
+      toast.error(data.error || "حدث خطأ أثناء الحفظ");
+    }
     setSaving(false);
   };
 
-  const groups: Record<string, Setting[]> = {};
-  settings.forEach((s) => {
-    if (!groups[s.group]) groups[s.group] = [];
-    groups[s.group].push(s);
-  });
-
-  const groupLabels: Record<string, { label: string; icon: React.ReactNode; description?: string }> = {
-    general:  { label: "إعدادات عامة",           icon: <Settings  className="h-4 w-4 text-primary-600" /> },
-    payment:  { label: "إعدادات التحويل البنكي", icon: <CreditCard className="h-4 w-4 text-green-600" /> },
-    payments: {
-      label: "خيارات التقسيط (Tabby / Tamara)",
-      icon: <CreditCard className="h-4 w-4 text-purple-600" />,
-      description: "🛍️ فعّل Tabby أو Tamara لعرض شارات التقسيط تلقائياً على صفحات المنتجات وزيادة معدل التحويل.",
-    },
-    orders:   { label: "إعدادات الطلبات",        icon: <Settings  className="h-4 w-4 text-blue-600" /> },
-    tracking: {
-      label: "بكسلات التتبع والإعلانات",
-      icon: <BarChart2 className="h-4 w-4 text-orange-500" />,
-      description: "💡 أضف معرفات البكسلات الخاصة بك وسيتم حقنها تلقائياً في جميع صفحات الموقع.",
-    },
+  const handleDiscard = () => {
+    setValues({ ...saved });
+    toast("تم إلغاء التغييرات", { icon: "↩️" });
   };
 
-  if (loading) return <div className="animate-pulse space-y-4"><div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-2xl" /></div>;
+  const EXCLUDED_GROUPS = ["payment_methods"];
+  const groups = Array.from(new Set(settings.map((s) => s.group))).filter((g) => !EXCLUDED_GROUPS.includes(g));
+  const activeSettings = settings.filter((s) => s.group === activeGroup);
+  const meta = GROUP_META[activeGroup];
+
+  if (loading) {
+    return (
+      <div className="animate-pulse flex gap-6 max-w-5xl">
+        <div className="w-52 shrink-0 space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          ))}
+        </div>
+        <div className="flex-1 space-y-3">
+          <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-2xl" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-3xl">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">الإعدادات</h1>
-          <p className="text-gray-500 text-sm mt-1">إعدادات المتجر العامة</p>
+          <p className="text-gray-500 text-sm mt-1">إعدادات المتجر العامة والمتكاملة</p>
         </div>
-        <Button onClick={handleSave} loading={saving}>
-          <Save className="h-4 w-4" />
-          حفظ التغييرات
-        </Button>
+        <div className="flex items-center gap-3">
+          {isDirty && (
+            <>
+              <span className="hidden sm:flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400 font-medium">
+                <AlertCircle className="h-4 w-4" />
+                تغييرات غير محفوظة
+              </span>
+              <Button variant="secondary" size="sm" onClick={handleDiscard}>
+                إلغاء
+              </Button>
+            </>
+          )}
+          <Button onClick={handleSave} loading={saving} disabled={!isDirty}>
+            <Save className="h-4 w-4" />
+            حفظ التغييرات
+          </Button>
+        </div>
       </div>
 
-      {Object.entries(groups).map(([group, groupSettings]) => (
-        <Card key={group}>
-          <h2 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            {groupLabels[group]?.icon ?? <Settings className="h-4 w-4 text-primary-600" />}
-            {groupLabels[group]?.label ?? group}
-          </h2>
-          {groupLabels[group]?.description && (
-            <p className="text-xs text-gray-600 dark:text-gray-300 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-              {groupLabels[group].description}
-            </p>
-          )}
-          <div className="space-y-4">
-            {groupSettings.map((setting) => (
-              <div key={setting.key}>
-                {setting.type === "boolean" ? (
-                  <label className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800 cursor-pointer">
-                    <span className="font-medium text-sm text-gray-900 dark:text-white">
-                      {setting.labelAr || setting.label || setting.key}
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={values[setting.key] === "true"}
-                      onChange={(e) => setValues({ ...values, [setting.key]: String(e.target.checked) })}
-                      className="w-4 h-4 accent-primary-600"
-                    />
-                  </label>
-                ) : (
-                  <Input
-                    label={setting.labelAr || setting.label || setting.key}
-                    value={values[setting.key] || ""}
-                    onChange={(e) => setValues({ ...values, [setting.key]: e.target.value })}
-                  />
-                )}
-              </div>
-            ))}
+      <div className="flex gap-6 items-start">
+        {/* Sidebar nav */}
+        <nav className="w-52 shrink-0 space-y-1 sticky top-6">
+          {groups.map((group) => {
+            const m = GROUP_META[group];
+            const isActive = group === activeGroup;
+            return (
+              <button
+                key={group}
+                onClick={() => setActiveGroup(group)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-start ${
+                  isActive
+                    ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 shadow-sm"
+                    : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                <span className={isActive ? "text-primary-600 dark:text-primary-400" : "text-gray-400"}>
+                  {m?.icon ?? <Settings className="h-4 w-4" />}
+                </span>
+                {m?.label ?? group}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 space-y-5">
+          {/* Group header banner */}
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl ${meta?.color ?? "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"}`}>
+            <div className="shrink-0">{meta?.icon ?? <Settings className="h-4 w-4" />}</div>
+            <div>
+              <p className="font-bold text-sm">{meta?.label ?? activeGroup}</p>
+              <p className="text-xs opacity-75 mt-0.5">{meta?.description}</p>
+            </div>
           </div>
-        </Card>
-      ))}
+
+          {/* Conversion group — custom card-based UI */}
+          {activeGroup === "conversion" ? (
+            <ConversionPanel
+              settings={activeSettings}
+              values={values}
+              saved={saved}
+              set={set}
+            />
+          ) : (
+            /* Generic settings list for all other groups */
+            <Card className="p-0 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/60">
+              {activeSettings.length === 0 ? (
+                <div className="px-5 py-12 text-center text-gray-400 text-sm">
+                  لا توجد إعدادات في هذا القسم
+                </div>
+              ) : (
+                activeSettings.map((setting) => {
+                  const label = setting.labelAr || setting.label || setting.key;
+                  const isChanged = values[setting.key] !== saved[setting.key];
+                  return (
+                    <div key={setting.key} className={`px-5 py-4 transition-colors ${isChanged ? "bg-amber-50/50 dark:bg-amber-900/5" : ""}`}>
+                      {setting.type === "boolean" ? (
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <p className="font-medium text-sm text-gray-900 dark:text-white">{label}</p>
+                            {setting.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{setting.description}</p>
+                            )}
+                          </div>
+                          <Toggle
+                            checked={values[setting.key] === "true"}
+                            onChange={(v) => set(setting.key, String(v))}
+                          />
+                        </div>
+                      ) : (
+                        <Input
+                          label={label}
+                          value={values[setting.key] || ""}
+                          onChange={(e) => set(setting.key, e.target.value)}
+                          hint={setting.description}
+                        />
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </Card>
+          )}
+
+          {/* Sticky bottom save bar */}
+          {isDirty && (
+            <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 bg-gray-900 dark:bg-black text-white rounded-2xl px-5 py-3 shadow-2xl border border-gray-700">
+              <div className="flex items-center gap-2 text-sm text-gray-300">
+                <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                <span>لديك تغييرات غير محفوظة</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDiscard}
+                  className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1"
+                >
+                  إلغاء
+                </button>
+                <Button size="sm" onClick={handleSave} loading={saving}>
+                  <Save className="h-3.5 w-3.5" />
+                  حفظ الآن
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

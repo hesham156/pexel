@@ -57,6 +57,7 @@ export const getCategoryWithProducts = cache(async (slug: string) => {
         where: { isActive: true },
         include: { category: true },
         orderBy: { sortOrder: "asc" },
+        take: 100,
       },
     },
   });

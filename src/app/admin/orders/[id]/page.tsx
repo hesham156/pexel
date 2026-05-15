@@ -62,38 +62,50 @@ export default function AdminOrderDetailPage() {
 
   const handlePaymentAction = async (action: "approve" | "reject") => {
     setActionLoading("payment");
-    const res = await fetch(`/api/admin/orders/${params.id}/payment`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, adminNotes }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      toast.success(action === "approve" ? "✅ تم الموافقة على الدفع" : "❌ تم رفض الدفع");
-      setOrder(data.data);
-    } else toast.error(data.error || "حدث خطأ");
-    setActionLoading(false);
+    try {
+      const res = await fetch(`/api/admin/orders/${params.id}/payment`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, adminNotes }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(action === "approve" ? "✅ تم الموافقة على الدفع" : "❌ تم رفض الدفع");
+        setOrder(data.data);
+      } else {
+        toast.error(data.error || "حدث خطأ");
+      }
+    } catch {
+      toast.error("تعذّر الاتصال بالخادم، حاول مرة أخرى");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleDeliverItem = async (itemId: string) => {
     const form = deliveryForms[itemId];
     if (!form?.data.trim()) { toast.error("أدخل بيانات التسليم أولاً"); return; }
     setActionLoading(itemId);
-    const res = await fetch(`/api/admin/orders/${params.id}/deliver`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        itemId,
-        deliveredData: form.data,
-        subscriptionStartDate: form.startDate,
-        subscriptionEndDate: form.endDate,
-        variantLabel: form.variantLabel,
-      }),
-    });
-    const result = await res.json();
-    if (result.success) { toast.success("✅ تم التسليم بنجاح"); setOrder(result.data); }
-    else toast.error(result.error || "حدث خطأ");
-    setActionLoading(false);
+    try {
+      const res = await fetch(`/api/admin/orders/${params.id}/deliver`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId,
+          deliveredData: form.data,
+          subscriptionStartDate: form.startDate,
+          subscriptionEndDate: form.endDate,
+          variantLabel: form.variantLabel,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) { toast.success("✅ تم التسليم بنجاح"); setOrder(result.data); }
+      else toast.error(result.error || "حدث خطأ");
+    } catch {
+      toast.error("تعذّر الاتصال بالخادم، حاول مرة أخرى");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (loading) return (

@@ -20,6 +20,8 @@ export async function GET() {
           "pm_bank_transfer_iban",
           "pm_paypal_enabled",
           "pm_paypal_mode",
+          "pm_paypal_client_id",
+          "pm_paypal_client_secret",
           "pm_tabby_enabled",
           "pm_tabby_public_key",
           "pm_tabby_merchant_code",
@@ -43,8 +45,11 @@ export async function GET() {
       iban:          map["pm_bank_transfer_iban"]           || "",
     },
     paypal: {
-      enabled: map["pm_paypal_enabled"] === "true",
-      mode:    map["pm_paypal_mode"] || "sandbox",
+      // Only expose as enabled if credentials are actually configured
+      enabled: map["pm_paypal_enabled"] === "true"
+        && !!map["pm_paypal_client_id"]
+        && !!map["pm_paypal_client_secret"],
+      mode: map["pm_paypal_mode"] || "sandbox",
     },
     tabby: {
       enabled:      map["pm_tabby_enabled"] === "true",

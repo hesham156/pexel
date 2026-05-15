@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, badRequest } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
+
+  if (session.user.role !== "ADMIN") return unauthorized();
 
   if (session.user.id === params.id) {
-    return NextResponse.json({ success: false, error: "لا يمكن حذف حسابك الخاص" }, { status: 400 });
+    return badRequest("لا يمكن حذف حسابك الخاص");
   }
 
   await prisma.user.update({ where: { id: params.id }, data: { isActive: false } });

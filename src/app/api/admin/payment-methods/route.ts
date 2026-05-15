@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, serverError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -60,10 +59,7 @@ const DEFAULT_LABELS: Record<string, { labelAr: string; type: string }> = {
 };
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  if (!await requireAdmin()) return unauthorized();
 
   // Ensure all keys exist in DB (upsert defaults)
   await Promise.all(
@@ -90,10 +86,11 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
+
+  // Only ADMIN (not STAFF) can update payment methods
+  if (session.user.role !== "ADMIN") return unauthorized();
 
   try {
     const { settings } = await req.json() as { settings: Record<string, string> };
@@ -126,7 +123,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+  } catch (err) {
+    return serverError("PATCH /api/admin/payment-methods", err);
   }
 }

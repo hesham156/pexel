@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -12,8 +12,23 @@ export default function ProfilePage() {
   const { data: session, update } = useSession();
   const [loading, setLoading] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
-  const [profile, setProfile] = useState({ name: session?.user.name || "", phone: "" });
+  const [profile, setProfile] = useState({ name: "", phone: "" });
   const [password, setPassword] = useState({ current: "", new: "", confirm: "" });
+
+  // Fetch current user data (including phone) from DB on mount
+  useEffect(() => {
+    fetch("/api/users/profile")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          setProfile({ name: data.data.name || "", phone: data.data.phone || "" });
+        }
+      })
+      .catch(() => {
+        // Fallback to session name if fetch fails
+        setProfile((prev) => ({ ...prev, name: session?.user.name || "" }));
+      });
+  }, [session?.user.name]);
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();

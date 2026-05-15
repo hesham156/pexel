@@ -14,10 +14,25 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setSent(true);
-    toast.success("تم إرسال رسالتك بنجاح!");
-    setLoading(false);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSent(true);
+        toast.success("تم إرسال رسالتك بنجاح!");
+        setForm({ name: "", email: "", subject: "", message: "" });
+      } else {
+        toast.error(data.error || "حدث خطأ، حاول مرة أخرى");
+      }
+    } catch {
+      toast.error("تعذّر الإرسال، تحقق من اتصالك بالإنترنت");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

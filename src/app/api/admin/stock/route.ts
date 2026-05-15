@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, serverError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-async function requireAdmin(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) return null;
-  return session;
-}
-
 export async function GET(req: NextRequest) {
-  const session = await requireAdmin(req);
-  if (!session) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+  if (!await requireAdmin()) return unauthorized();
 
   const { searchParams } = new URL(req.url);
   const productId = searchParams.get("productId");
@@ -29,8 +21,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await requireAdmin(req);
-  if (!session) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
 
   try {
     const { productId, items } = await req.json();
@@ -55,7 +47,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data: { count: created.count } });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+  } catch (err) {
+    return serverError("POST /api/admin/stock", err);
   }
 }

@@ -1,18 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, notFound, badRequest, serverError } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
 
   try {
     const { itemId, deliveredData, subscriptionStartDate, subscriptionEndDate, variantLabel } = await req.json();
+
+    // Server-side guard: only allow delivery when payment is confirmed
+    const order = await prisma.order.findUnique({ where: { id: params.id }, select: { status: true } });
+    if (!order) return notFound("الطلب غير موجود");
+    if (order.status !== "PAYMENT_APPROVED" && order.status !== "PROCESSING") {
+      return badRequest("لا يمكن التسليم قبل الموافقة على الدفع");
+    }
 
     await prisma.orderItem.update({
       where: { id: itemId },
@@ -62,8 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     });
 
     return NextResponse.json({ success: true, data: updatedOrder });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+  } catch (err) {
+    return serverError("POST /api/admin/orders/[id]/deliver", err);
   }
 }

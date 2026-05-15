@@ -504,6 +504,31 @@ async function main() {
     { key: "meta_pixel_id", value: "", type: "text", label: "Meta Pixel ID", labelAr: "معرف ميتا بيكسل", group: "tracking" },
     { key: "tiktok_pixel_id", value: "", type: "text", label: "TikTok Pixel ID", labelAr: "معرف تيك توك بيكسل", group: "tracking" },
     { key: "snapchat_pixel_id", value: "", type: "text", label: "Snapchat Pixel ID", labelAr: "معرف سناب شات بيكسل", group: "tracking" },
+    // Conversion Optimization
+    { key: "live_activity_enabled",  value: "true",  type: "boolean", label: "Live Activity Toast",      labelAr: "إشعارات النشاط المباشر",      group: "conversion" },
+    { key: "live_activity_interval", value: "12",    type: "number",  label: "Activity Interval (sec)", labelAr: "فترة ظهور الإشعار (ثانية)",   group: "conversion" },
+    { key: "live_activity_names",    value: "أحمد,محمد,عبدالله,فيصل,سارة,نورة,ريم,خالد,عمر,يوسف,علي,مريم", type: "text", label: "Activity Names", labelAr: "أسماء عشوائية (مفصولة بفاصلة)", group: "conversion" },
+    { key: "live_activity_cities",   value: "الرياض,جدة,الدمام,مكة,المدينة,أبوظبي,دبي,الكويت,الدوحة,مسقط", type: "text", label: "Activity Cities", labelAr: "مدن عشوائية (مفصولة بفاصلة)", group: "conversion" },
+    { key: "flash_sale_enabled",     value: "false", type: "boolean", label: "Flash Sale Timer",         labelAr: "عداد العرض المحدود",          group: "conversion" },
+    { key: "flash_sale_ends_at",     value: "",      type: "text",    label: "Flash Sale End Date",      labelAr: "تاريخ انتهاء العرض (ISO)",    group: "conversion" },
+    { key: "flash_sale_label",       value: "⚡ ينتهي العرض خلال", type: "text", label: "Flash Sale Label", labelAr: "نص عداد العرض", group: "conversion" },
+    { key: "scarcity_enabled",       value: "false", type: "boolean", label: "Stock Scarcity Bar",       labelAr: "شريط الندرة",                 group: "conversion" },
+    { key: "scarcity_max",           value: "20",    type: "number",  label: "Max Stock Display",        labelAr: "الحد الأقصى للمخزون المعروض", group: "conversion" },
+    { key: "live_viewers_enabled",   value: "false", type: "boolean", label: "Live Viewers Counter",     labelAr: "عداد المشاهدين الحاليين",     group: "conversion" },
+    { key: "live_viewers_min",       value: "8",     type: "number",  label: "Min Viewers",              labelAr: "أقل عدد مشاهدين",            group: "conversion" },
+    { key: "live_viewers_max",       value: "34",    type: "number",  label: "Max Viewers",              labelAr: "أعلى عدد مشاهدين",           group: "conversion" },
+    { key: "sticky_cta_enabled",     value: "true",  type: "boolean", label: "Sticky Add to Cart",       labelAr: "زر الشراء الثابت",            group: "conversion" },
+    { key: "cart_progress_enabled",  value: "false", type: "boolean", label: "Cart Progress Bar",        labelAr: "شريط تقدم السلة",             group: "conversion" },
+    { key: "cart_progress_target",   value: "200",   type: "number",  label: "Progress Target (SAR)",    labelAr: "المبلغ المستهدف (ريال)",      group: "conversion" },
+    { key: "cart_progress_reward",   value: "خصم 10%", type: "text", label: "Progress Reward",          labelAr: "المكافأة عند الوصول للهدف",  group: "conversion" },
+    { key: "cart_progress_coupon",   value: "SAVE10", type: "text",  label: "Progress Coupon Code",     labelAr: "كود الكوبون",                 group: "conversion" },
+    { key: "guarantee_enabled",      value: "true",  type: "boolean", label: "Guarantee Message",        labelAr: "رسالة الضمان",                group: "conversion" },
+    { key: "guarantee_text",         value: "🛡 ضمان استرداد خلال 7 أيام إذا لم يعمل", type: "text", label: "Guarantee Text", labelAr: "نص رسالة الضمان", group: "conversion" },
+    // Accounting
+    { key: "tax_enabled",       value: "true",           type: "boolean", label: "Enable Tax (VAT)",      labelAr: "تفعيل ضريبة القيمة المضافة",   group: "accounting" },
+    { key: "tax_rate",          value: "15",             type: "number",  label: "Tax Rate (%)",          labelAr: "نسبة الضريبة (%)",              group: "accounting" },
+    { key: "tax_number",        value: "",               type: "text",    label: "Tax Registration No.",  labelAr: "الرقم الضريبي",                 group: "accounting" },
+    { key: "company_address",   value: "المملكة العربية السعودية", type: "text", label: "Company Address", labelAr: "عنوان الشركة",                group: "accounting" },
   ];
 
   for (const setting of settings) {

@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, badRequest, serverError } from "@/lib/api";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     const { searchParams } = new URL(req.url);
     const targetType = searchParams.get("targetType");
@@ -29,24 +25,20 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ ads });
-  } catch (error: any) {
-    console.error("Ads GET Error:", error);
-    return NextResponse.json({ error: "Failed to fetch advertisements" }, { status: 500 });
+  } catch (err) {
+    return serverError("GET /api/admin/ads", err);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     const body = await req.json();
     const { title, image, link, isActive, targetType, placement, targetUserIds } = body;
 
     if (!title || !image) {
-      return NextResponse.json({ error: "Title and Image are required" }, { status: 400 });
+      return badRequest("Title and Image are required");
     }
 
     const ad = await prisma.advertisement.create({
@@ -69,8 +61,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, ad }, { status: 201 });
-  } catch (error: any) {
-    console.error("Ads POST Error:", error);
-    return NextResponse.json({ error: "Failed to create advertisement" }, { status: 500 });
+  } catch (err) {
+    return serverError("POST /api/admin/ads", err);
   }
 }

@@ -40,6 +40,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const [newStockData, setNewStockData] = useState("");
   const [addingStock, setAddingStock] = useState(false);
   const [showStockData, setShowStockData] = useState<Record<string, boolean>>({});
+  const [confirmDeleteStockId, setConfirmDeleteStockId] = useState<string | null>(null);
   const [form, setForm] = useState({
     nameAr: "", name: "", slug: "", descriptionAr: "", description: "",
     price: "", comparePrice: "", categoryId: "", image: "",
@@ -121,8 +122,13 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const handleDeleteStock = async (id: string) => {
     const res = await fetch(`/api/admin/stock/${id}`, { method: "DELETE" });
     const data = await res.json();
-    if (data.success) { toast.success("تم الحذف"); await fetchStock(); }
-    else toast.error("حدث خطأ في الحذف");
+    if (data.success) {
+      toast.success("تم الحذف");
+      setConfirmDeleteStockId(null);
+      await fetchStock();
+    } else {
+      toast.error("حدث خطأ في الحذف");
+    }
   };
 
   /* ── Variant helpers ── */
@@ -158,6 +164,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
           comparePrice: form.comparePrice ? parseFloat(form.comparePrice) : null,
           sortOrder: parseInt(form.sortOrder),
           features:   form.features.split("\n").filter(Boolean),
+          featuresAr: form.featuresAr.split("\n").filter(Boolean),
           tags: [...variantTags, ...seoTags],
         }),
       });
@@ -363,13 +370,32 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
                         {showStockData[item.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
                       {!item.isDelivered && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteStock(item.id)}
-                          className="text-red-400 hover:text-red-600 shrink-0"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        confirmDeleteStockId === item.id ? (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteStock(item.id)}
+                              className="text-[10px] text-white bg-red-500 hover:bg-red-600 px-2 py-0.5 rounded-lg"
+                            >
+                              تأكيد
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteStockId(null)}
+                              className="text-[10px] text-gray-500 hover:text-gray-700 px-2 py-0.5 rounded-lg border border-gray-200"
+                            >
+                              إلغاء
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteStockId(item.id)}
+                            className="text-red-400 hover:text-red-600 shrink-0"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )
                       )}
                     </div>
                   ))}

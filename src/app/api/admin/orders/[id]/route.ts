@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, notFound } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  if (!await requireAdmin()) return unauthorized();
 
   const order = await prisma.order.findUnique({
     where: { id: params.id },
@@ -20,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     },
   });
 
-  if (!order) return NextResponse.json({ success: false, error: "الطلب غير موجود" }, { status: 404 });
+  if (!order) return notFound("الطلب غير موجود");
 
   return NextResponse.json({ success: true, data: order });
 }

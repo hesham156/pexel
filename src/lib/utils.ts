@@ -80,6 +80,8 @@ export function getPaymentMethodLabel(method: string) {
     CREDIT_CARD: "بطاقة ائتمانية",
     CRYPTO: "عملة رقمية",
     PAYPAL: "باي بال",
+    TABBY: "تابي",
+    TAMARA: "تمارا",
   };
   return labels[method] || method;
 }

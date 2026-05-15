@@ -5,6 +5,18 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 401 });
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, name: true, email: true, phone: true, avatar: true },
+  });
+  if (!user) return NextResponse.json({ success: false, error: "المستخدم غير موجود" }, { status: 404 });
+  return NextResponse.json({ success: true, data: user });
+}
+
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 401 });

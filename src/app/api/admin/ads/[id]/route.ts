@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, notFound, serverError } from "@/lib/api";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     const ad = await prisma.advertisement.findUnique({
       where: { id: params.id },
@@ -19,23 +15,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       }
     });
 
-    if (!ad) {
-      return NextResponse.json({ error: "Ad not found" }, { status: 404 });
-    }
+    if (!ad) return notFound("Ad not found");
 
     return NextResponse.json({ ad });
-  } catch (error: any) {
-    console.error("Ad GET Error:", error);
-    return NextResponse.json({ error: "Failed to fetch advertisement" }, { status: 500 });
+  } catch (err) {
+    return serverError("GET /api/admin/ads/[id]", err);
   }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     const body = await req.json();
     const { title, image, link, isActive, targetType, placement, targetUserIds } = body;
@@ -71,26 +61,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     });
 
     return NextResponse.json({ success: true, ad });
-  } catch (error: any) {
-    console.error("Ad PUT Error:", error);
-    return NextResponse.json({ error: "Failed to update advertisement" }, { status: 500 });
+  } catch (err) {
+    return serverError("PUT /api/admin/ads/[id]", err);
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+    if (!await requireAdmin()) return unauthorized();
 
     await prisma.advertisement.delete({
       where: { id: params.id }
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error("Ad DELETE Error:", error);
-    return NextResponse.json({ error: "Failed to delete advertisement" }, { status: 500 });
+  } catch (err) {
+    return serverError("DELETE /api/admin/ads/[id]", err);
   }
 }

@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  if (!await requireAdmin()) return unauthorized();
 
   const logs = await prisma.adminLog.findMany({
     include: { user: { select: { name: true, email: true } } },

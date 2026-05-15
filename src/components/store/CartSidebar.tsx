@@ -1,17 +1,66 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { X, ShoppingBag, Trash2, Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import { Button } from "@/components/ui/Button";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useUpsell } from "@/components/store/UpsellModal";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+import { CartProgressBar } from "@/components/store/CartProgressBar";
+import { useConversion } from "@/context/ConversionContext";
 
 export function CartSidebar() {
-  const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice, clearCart } = useCartStore();
+  const { items, isOpen, closeCart, removeItem, updateQuantity, getTotalPrice, clearCart, addItem } = useCartStore();
   const { formatAmount } = useCurrency();
+  const { showUpsell } = useUpsell();
+  const router = useRouter();
   const total = getTotalPrice();
+  const conversion = useConversion();
+
+  function CartProgressBarWrapper({ total }: { total: number }) {
+    if (!conversion.cart_progress_enabled) return null;
+    return (
+      <CartProgressBar
+        currentTotal={total}
+        target={conversion.cart_progress_target}
+        reward={conversion.cart_progress_reward}
+        coupon={conversion.cart_progress_coupon}
+      />
+    );
+  }
+
+  const handleCheckout = () => {
+    closeCart();
+    // Navigate to checkout immediately — the upsell renders as a full-screen overlay on top
+    router.push("/checkout");
+    // Show CHECKOUT upsell (overlay will appear on the checkout page)
+    const cartProductIds = items.map((i) => i.id);
+    showUpsell({
+      cartProductIds,
+      trigger: "CHECKOUT",
+      onAccept: (upsell) => {
+        const upsellVariants = upsell.offerProduct.variants ?? [];
+        const upsellPrice =
+          upsellVariants.length > 0 ? upsellVariants[0].price : upsell.offerProduct.price;
+        const upsellLabel = upsellVariants.length > 0 ? upsellVariants[0].label : undefined;
+        addItem({
+          id: upsell.offerProduct.id,
+          name: upsell.offerProduct.nameAr,
+          nameAr: upsell.offerProduct.nameAr,
+          price: upsellPrice,
+          image: upsell.offerProduct.image || undefined,
+          quantity: 1,
+          slug: upsell.offerProduct.slug,
+          variantLabel: upsellLabel,
+        });
+        toast.success(`تم إضافة ${upsell.offerProduct.nameAr} إلى السلة 🎉`);
+      },
+    });
+  };
 
   return (
     <>
@@ -138,23 +187,24 @@ export function CartSidebar() {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600 dark:text-gray-400 font-medium">الإجمالي</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                {formatAmount(total)}
-              </span>
-            </div>
-            <Link href="/checkout" onClick={closeCart}>
-              <Button fullWidth size="lg" className="text-base">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-3">
+            <CartProgressBarWrapper total={total} />
+            <div className="px-6 pb-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400 font-medium">الإجمالي</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                  {formatAmount(total)}
+                </span>
+              </div>
+              <Button fullWidth size="lg" className="text-base" onClick={handleCheckout}>
                 إتمام الشراء
               </Button>
-            </Link>
-            <Link href="/cart" onClick={closeCart}>
-              <Button fullWidth variant="outline" size="md">
-                عرض السلة
-              </Button>
-            </Link>
+              <Link href="/cart" onClick={closeCart}>
+                <Button fullWidth variant="outline" size="md">
+                  عرض السلة
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </div>

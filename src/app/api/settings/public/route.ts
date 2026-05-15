@@ -13,6 +13,27 @@ const PUBLIC_KEYS = [
   "tabby_installments",
   "tamara_enabled",
   "tamara_installments",
+  "guest_checkout",
+  // Conversion
+  "live_activity_enabled",
+  "live_activity_interval",
+  "live_activity_names",
+  "live_activity_cities",
+  "flash_sale_enabled",
+  "flash_sale_ends_at",
+  "flash_sale_label",
+  "scarcity_enabled",
+  "scarcity_max",
+  "live_viewers_enabled",
+  "live_viewers_min",
+  "live_viewers_max",
+  "sticky_cta_enabled",
+  "cart_progress_enabled",
+  "cart_progress_target",
+  "cart_progress_reward",
+  "cart_progress_coupon",
+  "guarantee_enabled",
+  "guarantee_text",
 ];
 
 export const revalidate = 300; // 5 min ISR cache

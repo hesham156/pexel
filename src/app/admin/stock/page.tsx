@@ -28,6 +28,7 @@ export default function AdminStockPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [showData, setShowData] = useState<Record<string, boolean>>({});
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState({ productId: "", data: "" });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -70,10 +71,9 @@ export default function AdminStockPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("هل تريد حذف هذا العنصر؟")) return;
     const res = await fetch(`/api/admin/stock/${id}`, { method: "DELETE" });
     const data = await res.json();
-    if (data.success) { toast.success("تم الحذف"); fetchStock(); }
+    if (data.success) { toast.success("تم الحذف"); setConfirmDeleteId(null); fetchStock(); }
     else toast.error(data.error || "حدث خطأ");
   };
 
@@ -115,9 +115,16 @@ export default function AdminStockPage() {
       title: "حذف",
       render: (_, row) => (
         !row.isDelivered ? (
-          <button onClick={() => handleDelete(row.id)} className="text-red-500 hover:text-red-600">
-            <Trash2 className="h-4 w-4" />
-          </button>
+          confirmDeleteId === row.id ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => handleDelete(row.id)} className="text-xs text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded-lg">تأكيد</button>
+              <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded-lg border">إلغاء</button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmDeleteId(row.id)} className="text-red-500 hover:text-red-600">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )
         ) : <span className="text-gray-300">—</span>
       ),
     },

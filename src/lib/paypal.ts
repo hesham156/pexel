@@ -56,8 +56,11 @@ async function generateAccessToken(clientId: string, clientSecret: string, mode:
 
   if (!response.ok) {
     const errorBody = await response.text();
-    console.error("PayPal Auth Error:", errorBody);
-    throw new Error("Failed to generate PayPal access token");
+    console.error(`[PayPal Auth] HTTP ${response.status} (mode=${mode}):`, errorBody);
+    if (response.status === 401) {
+      throw new Error(`PayPal: بيانات الاعتماد غير صحيحة أو الـ Mode غير متطابق (sandbox/live) — ${response.status}`);
+    }
+    throw new Error(`PayPal: فشل الحصول على Access Token — ${response.status}: ${errorBody.slice(0, 200)}`);
   }
 
   const data = await response.json();

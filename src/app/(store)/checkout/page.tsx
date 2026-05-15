@@ -74,37 +74,43 @@ function MethodButton({
 
 /* ══════════════════════ PAGE ══════════════════════ */
 export default function CheckoutPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { items, getTotalPrice, clearCart } = useCartStore();
   const { formatAmount } = useCurrency();
 
-  const [gateways, setGateways]         = useState<PaymentMethods | null>(null);
+  const [gateways, setGateways]             = useState<PaymentMethods | null>(null);
   const [gatewaysLoading, setGatewaysLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [couponCode, setCouponCode]       = useState("");
-  const [coupon, setCoupon]               = useState<{ discountType: string; discountValue: number; code: string } | null>(null);
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [notes, setNotes]                 = useState("");
-  const [loading, setLoading]             = useState(false);
-  const [proofFile, setProofFile]         = useState<File | null>(null);
+  const [paymentMethod, setPaymentMethod]   = useState("");
+  const [couponCode, setCouponCode]         = useState("");
+  const [coupon, setCoupon]                 = useState<{ discountType: string; discountValue: number; code: string } | null>(null);
+  const [couponLoading, setCouponLoading]   = useState(false);
+  const [notes, setNotes]                   = useState("");
+  const [loading, setLoading]               = useState(false);
+  const [proofFile, setProofFile]           = useState<File | null>(null);
+  // Guest checkout
+  const [guestCheckoutEnabled, setGuestCheckoutEnabled] = useState(false);
+  const [guestName, setGuestName]           = useState("");
+  const [guestEmail, setGuestEmail]         = useState("");
 
-  /* Fetch enabled gateways */
+  /* Fetch enabled gateways + public settings */
   useEffect(() => {
-    fetch("/api/payment-methods")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) {
-          setGateways(d.data);
-          // Auto-select first enabled method
-          const g: PaymentMethods = d.data;
-          if (g.bankTransfer.enabled) setPaymentMethod("BANK_TRANSFER");
-          else if (g.paypal.enabled)  setPaymentMethod("PAYPAL");
-          else if (g.tabby.enabled)   setPaymentMethod("TABBY");
-          else if (g.tamara.enabled)  setPaymentMethod("TAMARA");
-        }
-      })
-      .finally(() => setGatewaysLoading(false));
+    Promise.all([
+      fetch("/api/payment-methods").then((r) => r.json()),
+      fetch("/api/settings/public").then((r) => r.json()),
+    ]).then(([d, s]) => {
+      if (d.success) {
+        setGateways(d.data);
+        const g: PaymentMethods = d.data;
+        if (g.bankTransfer.enabled) setPaymentMethod("BANK_TRANSFER");
+        else if (g.paypal.enabled)  setPaymentMethod("PAYPAL");
+        else if (g.tabby.enabled)   setPaymentMethod("TABBY");
+        else if (g.tamara.enabled)  setPaymentMethod("TAMARA");
+      }
+      if (s.success) {
+        setGuestCheckoutEnabled(s.data.guest_checkout === true);
+      }
+    }).finally(() => setGatewaysLoading(false));
   }, []);
 
   const subtotal = getTotalPrice();
@@ -116,19 +122,32 @@ export default function CheckoutPage() {
   const total = Math.max(0, subtotal - discount);
 
   /* ── Guards ── */
-  if (!session) {
+  // Still loading session — wait
+  if (sessionStatus === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-gray-400 text-sm">جاري التحميل...</div>
+      </div>
+    );
+  }
+
+  // No session + guest checkout disabled → force login
+  // Wait for gateways to finish loading before showing "must login" — prevents
+  // false-positive flash while guest_checkout setting is still being fetched.
+  if (!session && !gatewaysLoading && !guestCheckoutEnabled) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="text-6xl">🔐</div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">يجب تسجيل الدخول أولاً</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">سجّل دخولك لإتمام عملية الشراء</p>
           <Link href="/login?redirect=/checkout"><Button>تسجيل الدخول</Button></Link>
         </div>
       </div>
     );
   }
 
-  if (items.length === 0) {
+if (items.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -158,12 +177,20 @@ export default function CheckoutPage() {
 
   const handleSubmit = async () => {
     if (!paymentMethod) { toast.error("اختر طريقة دفع أولاً"); return; }
+    // Validate guest fields if not logged in
+    if (!session) {
+      if (!guestName.trim()) { toast.error("أدخل اسمك الكامل"); return; }
+      if (!guestEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
+        toast.error("أدخل بريد إلكتروني صحيح"); return;
+      }
+    }
     setLoading(true);
     try {
       let proofImageUrl: string | undefined;
       if (proofFile && paymentMethod === "BANK_TRANSFER") {
         const formData = new FormData();
         formData.append("file", proofFile);
+        formData.append("purpose", "payment_proof");
         const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
         const uploadData = await uploadRes.json();
         if (uploadData.success) proofImageUrl = uploadData.url;
@@ -178,19 +205,21 @@ export default function CheckoutPage() {
           couponCode: coupon?.code,
           notes,
           proofImageUrl,
+          // Guest fields
+          ...(!session && { guestName: guestName.trim(), guestEmail: guestEmail.trim().toLowerCase() }),
         }),
       });
 
       const data = await res.json();
       if (data.success) {
         clearCart();
-        toast.success("تم إرسال طلبك بنجاح! 🎉");
-        
         if (data.paypalApproveLink) {
-          // Redirect to PayPal
           window.location.href = data.paypalApproveLink;
         } else {
-          router.push(`/dashboard/orders/${data.data.id}`);
+          // Redirect everyone to the unified thank-you page
+          router.push(
+            `/thank-you?order=${data.data.id}&num=${encodeURIComponent(data.data.orderNumber)}`
+          );
         }
       } else {
         toast.error(data.error || "حدث خطأ في إرسال الطلب");
@@ -217,6 +246,36 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* ── Left: Payment Form ── */}
           <div className="lg:col-span-3 space-y-6">
+
+            {/* ── Guest Info (shown only when not logged in) ── */}
+            {!session && guestCheckoutEnabled && (
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-bold text-gray-900 dark:text-white text-lg">بياناتك</h2>
+                  <Link href="/login?redirect=/checkout" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                    لديك حساب؟ سجّل دخولك
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="الاسم الكامل"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder="محمد أحمد"
+                  />
+                  <Input
+                    label="البريد الإلكتروني"
+                    type="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    placeholder="example@email.com"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  📩 سيتم إرسال تفاصيل طلبك على هذا البريد الإلكتروني
+                </p>
+              </div>
+            )}
 
             {/* Payment Method Selector */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">

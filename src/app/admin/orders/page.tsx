@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Badge, getStatusBadge } from "@/components/ui/Badge";
 import { DataTable, Column, Pagination } from "@/components/ui/DataTable";
-import { Select } from "@/components/ui/Input";
+import { Select, Input } from "@/components/ui/Input";
+import { Search } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { OrderWithDetails } from "@/types";
 
@@ -12,6 +13,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -25,6 +27,17 @@ export default function AdminOrdersPage() {
   }, [statusFilter]);
 
   useEffect(() => { fetchOrders(); setPage(1); }, [fetchOrders]);
+
+  const filteredOrders = search.trim()
+    ? orders.filter((o) => {
+        const q = search.toLowerCase();
+        return (
+          o.orderNumber?.toLowerCase().includes(q) ||
+          o.user?.name?.toLowerCase().includes(q) ||
+          o.user?.email?.toLowerCase().includes(q)
+        );
+      })
+    : orders;
 
   const columns: Column<OrderWithDetails>[] = [
     {
@@ -81,8 +94,8 @@ export default function AdminOrdersPage() {
     },
   ];
 
-  const totalPages = Math.ceil(orders.length / pageSize);
-  const paginatedOrders = orders.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(filteredOrders.length / pageSize);
+  const paginatedOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -93,7 +106,16 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="بحث برقم الطلب أو اسم العميل..."
+            className="ps-10"
+          />
+        </div>
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -106,6 +128,7 @@ export default function AdminOrdersPage() {
             { value: "PROCESSING", label: "جاري المعالجة" },
             { value: "DELIVERED", label: "تم التسليم" },
             { value: "CANCELLED", label: "ملغي" },
+            { value: "REFUNDED", label: "مسترد" },
           ]}
         />
       </div>
@@ -114,7 +137,7 @@ export default function AdminOrdersPage() {
       <Pagination
         currentPage={page}
         totalPages={totalPages}
-        totalItems={orders.length}
+        totalItems={filteredOrders.length}
         pageSize={pageSize}
         onPageChange={setPage}
         onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import {
   ShoppingBag, Users, DollarSign, Package, AlertCircle, CheckCircle, Clock, MessageSquare,
+  TrendingUp, Star, Percent,
 } from "lucide-react";
 import { formatCurrency, formatDate, serializeData } from "@/lib/utils";
 import { Badge, getStatusBadge } from "@/components/ui/Badge";
@@ -22,6 +23,7 @@ export default async function AdminDashboardPage() {
     openTickets,
     recentOrders,
     lowStockProducts,
+    topProducts,
   ] = await Promise.all([
     prisma.order.aggregate({ where: { status: "DELIVERED" }, _sum: { total: true } }),
     prisma.order.count(),
@@ -35,16 +37,36 @@ export default async function AdminDashboardPage() {
       orderBy: { createdAt: "desc" },
       include: { user: true, payment: true, items: true },
     }),
+    // Low-stock: count actual undelivered SubscriptionStock rows (accurate)
+    (async () => {
+      const stockGroups = await prisma.subscriptionStock.groupBy({
+        by: ["productId"],
+        where: { isDelivered: false },
+        _count: { _all: true },
+      });
+      const countMap = new Map(stockGroups.map((g) => [g.productId, g._count._all]));
+      const autoProducts = await prisma.product.findMany({
+        where: { isActive: true, deliveryMethod: "AUTOMATIC" },
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+      });
+      return autoProducts
+        .filter((p) => (countMap.get(p.id) ?? 0) < 5)
+        .slice(0, 5);
+    })(),
     prisma.product.findMany({
-      where: { isActive: true, stockCount: { lt: 5 } },
-      include: { category: true },
+      where: { isActive: true },
+      include: { category: true, _count: { select: { orderItems: true } } },
+      orderBy: { orderItems: { _count: "desc" } },
       take: 5,
     }),
   ]);
 
   const revenue = parseFloat(String(totalRevenue._sum.total || 0));
+  const conversionRate = totalOrders > 0 ? Math.round((deliveredOrders / totalOrders) * 100) : 0;
   const safeRecentOrders = serializeData(recentOrders);
   const safeLowStock = serializeData(lowStockProducts);
+  const safeTopProducts = serializeData(topProducts);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -62,10 +84,10 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Second Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center shrink-0">
               <Clock className="h-5 w-5" />
             </div>
             <div>
@@ -76,7 +98,7 @@ export default async function AdminDashboardPage() {
         </Card>
         <Card>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 flex items-center justify-center shrink-0">
               <CheckCircle className="h-5 w-5" />
             </div>
             <div>
@@ -88,7 +110,7 @@ export default async function AdminDashboardPage() {
         <Link href="/admin/tickets">
           <Card hover>
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
                 <MessageSquare className="h-5 w-5" />
               </div>
               <div>
@@ -98,6 +120,17 @@ export default async function AdminDashboardPage() {
             </div>
           </Card>
         </Link>
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
+              <Percent className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-gray-900 dark:text-white">{conversionRate}%</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">معدل الإتمام</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -140,36 +173,79 @@ export default async function AdminDashboardPage() {
           </Card>
         </div>
 
-        {/* Low Stock Alert */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              تنبيه المخزون
-            </h2>
-            <Link href="/admin/stock" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">إدارة</Link>
-          </div>
-          <div className="space-y-3">
-            {safeLowStock.length === 0 ? (
-              <Card className="text-center py-6">
-                <p className="text-sm text-gray-500 dark:text-gray-400">جميع المنتجات لديها مخزون كافٍ ✅</p>
-              </Card>
-            ) : (
-              safeLowStock.map((product) => (
-                <Card key={product.id} className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{product.nameAr}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{product.category.nameAr}</p>
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+
+          {/* Top Products */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary-500" />
+                الأكثر مبيعاً
+              </h2>
+              <Link href="/admin/products" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">عرض الكل</Link>
+            </div>
+            <div className="space-y-2">
+              {safeTopProducts.map((product, i) => (
+                <Link key={product.id} href={`/admin/products/${product.id}`}>
+                  <Card hover className="flex items-center gap-3 p-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                      i === 0 ? "bg-yellow-100 text-yellow-700" :
+                      i === 1 ? "bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200" :
+                      i === 2 ? "bg-orange-100 text-orange-700" :
+                      "bg-gray-100 dark:bg-gray-700 text-gray-500"
+                    }`}>{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1">{product.nameAr}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{product.category?.nameAr}</p>
                     </div>
-                    <span className={`font-black text-lg ${product.stockCount === 0 ? "text-red-600" : "text-orange-600"}`}>
-                      {product.stockCount}
-                    </span>
-                  </div>
+                    <div className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 font-bold shrink-0">
+                      <Star className="h-3 w-3" />
+                      {product._count?.orderItems || 0}
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+              {safeTopProducts.length === 0 && (
+                <Card className="text-center py-4">
+                  <p className="text-sm text-gray-400">لا توجد بيانات مبيعات بعد</p>
                 </Card>
-              ))
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Low Stock Alert */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-orange-500" />
+                تنبيه المخزون
+              </h2>
+              <Link href="/admin/stock" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">إدارة</Link>
+            </div>
+            <div className="space-y-3">
+              {safeLowStock.length === 0 ? (
+                <Card className="text-center py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">جميع المنتجات لديها مخزون كافٍ ✅</p>
+                </Card>
+              ) : (
+                safeLowStock.map((product) => (
+                  <Card key={product.id} className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm">{product.nameAr}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{product.category.nameAr}</p>
+                      </div>
+                      <span className={`font-black text-lg ${product.stockCount === 0 ? "text-red-600" : "text-orange-600"}`}>
+                        {product.stockCount}
+                      </span>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

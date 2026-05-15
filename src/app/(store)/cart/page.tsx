@@ -37,7 +37,10 @@ export default function CartPage() {
       <div className="container-custom">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">سلة الشراء</h1>
-          <button onClick={clearCart} className="text-sm text-red-500 hover:text-red-600 hover:underline">
+          <button
+            onClick={() => { if (window.confirm("هل تريد إفراغ السلة بالكامل؟")) clearCart(); }}
+            className="text-sm text-red-500 hover:text-red-600 hover:underline"
+          >
             مسح الكل
           </button>
         </div>
@@ -74,7 +77,8 @@ export default function CartPage() {
                   <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
                     <button
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-lg bg-white dark:bg-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors shadow-sm"
+                      disabled={item.quantity <= 1}
+                      className="w-7 h-7 rounded-lg bg-white dark:bg-gray-600 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Minus className="h-3 w-3" />
                     </button>

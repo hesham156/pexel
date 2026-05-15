@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 interface Ad {
   id: string;
@@ -9,7 +9,7 @@ interface Ad {
   link?: string;
 }
 
-export default function AdBanner({ placement }: { placement: string }) {
+const AdBanner = memo(function AdBanner({ placement }: { placement: string }) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,4 +51,6 @@ export default function AdBanner({ placement }: { placement: string }) {
       </div>
     </div>
   );
-}
+});
+
+export default AdBanner;

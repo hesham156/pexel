@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, unauthorized, serverError } from "@/lib/api";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
+
+  // Only ADMIN (not STAFF) can manage admins
+  if (session.user.role !== "ADMIN") return unauthorized();
 
   const admins = await prisma.user.findMany({
     where: { role: { in: ["ADMIN", "STAFF"] } },
@@ -22,10 +22,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ success: false, error: "غير مصرح" }, { status: 403 });
-  }
+  const session = await requireAdmin();
+  if (!session) return unauthorized();
+
+  if (session.user.role !== "ADMIN") return unauthorized();
 
   try {
     const { name, email, password, role } = await req.json();
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data: admin });
-  } catch {
-    return NextResponse.json({ success: false, error: "حدث خطأ" }, { status: 500 });
+  } catch (err) {
+    return serverError("POST /api/admin/admins", err);
   }
 }

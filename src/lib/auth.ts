@@ -1,7 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
+import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
@@ -47,12 +47,36 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // Initial sign-in — embed id, role, isActive
         token.id = user.id;
         token.role = (user as unknown as { role: UserRole }).role;
+        token.isActive = true;
+        token.refreshedAt = Math.floor(Date.now() / 1000);
+      } else if (token.id) {
+        // Subsequent requests — re-check DB every 5 minutes
+        const now = Math.floor(Date.now() / 1000);
+        const lastRefresh = (token.refreshedAt as number) || 0;
+        if (now - lastRefresh > 300) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true, isActive: true },
+          });
+          if (!dbUser || !dbUser.isActive) {
+            token.isActive = false; // will cause session callback to expire the session
+          } else {
+            token.role = dbUser.role;
+            token.isActive = true;
+          }
+          token.refreshedAt = now;
+        }
       }
       return token;
     },
     async session({ session, token }) {
+      // Banned/deactivated user — return expired session so client logs out
+      if (token.isActive === false) {
+        return { ...session, expires: new Date(0).toISOString() };
+      }
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
@@ -66,7 +90,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
@@ -87,5 +111,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: UserRole;
+    isActive?: boolean;
+    refreshedAt?: number;
   }
 }
