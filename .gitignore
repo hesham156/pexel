@@ -41,3 +41,9 @@ Thumbs.db
 
 # Misc
 *.pem
+
+# Claude worktrees
+.claude/worktrees/
+
+# Uploaded files (user-generated content)
+public/uploads/
