@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { SiteLogo } from "@/components/ui/site-logo";
 import {
   LayoutDashboard, Package, Tag, ShoppingBag, Users, CreditCard, Archive,
-  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck, BookOpen, Megaphone, TrendingUp, Bell, Calculator, TrendingDown, Receipt,
+  MessageSquare, TicketPercent, Settings, Shield, FileText, LogOut, ChevronLeft, Home, Wallet, SearchCheck, BookOpen, Megaphone, TrendingUp, Bell, Calculator, TrendingDown, Receipt, Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +65,7 @@ const navGroups = [
       { href: "/admin/admins", label: "المشرفون", icon: Shield },
       { href: "/admin/logs", label: "سجل النشاطات", icon: FileText },
       { href: "/admin/seo", label: "إعدادات SEO", icon: SearchCheck },
+      { href: "/admin/integrations", label: "التكاملات", icon: Plug },
       { href: "/admin/settings", label: "الإعدادات", icon: Settings },
     ],
   },

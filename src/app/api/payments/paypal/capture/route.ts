@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { capturePayPalOrder } from "@/lib/paypal";
+import { notifyOrderStatusUpdated } from "@/lib/hayyak";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,13 @@ export async function GET(req: NextRequest) {
           data: { status: "PAYMENT_APPROVED" },
         }),
       ]);
+
+      // إشعار حياك بتغيّر حالة الطلب إلى "تمت الموافقة على الدفع"
+      const updatedOrder = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, orderNumber: true, status: true, total: true, user: { select: { name: true, phone: true } } },
+      });
+      if (updatedOrder) await notifyOrderStatusUpdated(updatedOrder);
 
       // Automatically deliver AUTOMATIC products (Optional, but good for digital products)
       // Here we just redirect and let the webhook or polling handle it, 

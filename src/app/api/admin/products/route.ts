@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, unauthorized, serverError } from "@/lib/api";
+import { notifyProductUpserted } from "@/lib/hayyak";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
         details: { name: product.nameAr },
       },
     });
+
+    // إشعار حياك: منتج جديد → تحديث الكتالوج فوراً
+    await notifyProductUpserted(product, true);
 
     return NextResponse.json({ success: true, data: product });
   } catch (err) {

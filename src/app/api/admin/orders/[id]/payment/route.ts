@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, unauthorized, notFound, badRequest, serverError } from "@/lib/api";
+import { notifyOrderStatusUpdated } from "@/lib/hayyak";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         },
       });
 
+      // إشعار حياك بتغيّر حالة الطلب
+      await notifyOrderStatusUpdated(updatedOrder);
+
       return NextResponse.json({ success: true, data: updatedOrder });
     }
 
@@ -126,6 +130,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       await prisma.adminLog.create({
         data: { userId: session.user.id, action: "REJECT_PAYMENT", entity: "Order", entityId: params.id },
       });
+
+      // إشعار حياك بتغيّر حالة الطلب
+      await notifyOrderStatusUpdated(updatedOrder);
 
       return NextResponse.json({ success: true, data: updatedOrder });
     }

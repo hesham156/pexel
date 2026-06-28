@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateOrderNumber } from "@/lib/utils";
 import { createPayPalOrder, getPayPalConfig } from "@/lib/paypal";
+import { notifyOrderCreated } from "@/lib/hayyak";
 import bcrypt from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -175,7 +176,11 @@ export async function POST(req: NextRequest) {
           },
         },
       },
-      include: { items: { include: { product: true } }, payment: true },
+      include: {
+        items: { include: { product: true } },
+        payment: true,
+        user: { select: { name: true, phone: true } },
+      },
     });
 
     // Atomic coupon increment — re-check the limit in the WHERE to guard against races
@@ -231,6 +236,9 @@ export async function POST(req: NextRequest) {
         );
       }
     }
+
+    // إشعار حياك: تم إنشاء الطلب → رسالة تأكيد واتساب للعميل (لا يوقف الاستجابة عند الفشل)
+    await notifyOrderCreated(order);
 
     return NextResponse.json({ success: true, data: order, paypalApproveLink });
   } catch (error) {

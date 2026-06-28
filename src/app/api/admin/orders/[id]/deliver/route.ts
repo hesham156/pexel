@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, unauthorized, notFound, badRequest, serverError } from "@/lib/api";
+import { notifyOrderStatusUpdated } from "@/lib/hayyak";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         details: { orderId: params.id, subscriptionEndDate },
       },
     });
+
+    // إشعار حياك بتغيّر حالة الطلب (PROCESSING / DELIVERED)
+    await notifyOrderStatusUpdated(updatedOrder);
 
     return NextResponse.json({ success: true, data: updatedOrder });
   } catch (err) {

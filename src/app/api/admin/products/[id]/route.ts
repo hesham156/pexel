@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, unauthorized, notFound, serverError } from "@/lib/api";
+import { notifyProductUpserted, notifyProductDeleted } from "@/lib/hayyak";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       data: { userId: session.user.id, action: "UPDATE_PRODUCT", entity: "Product", entityId: params.id },
     });
 
+    // إشعار حياك: تحديث المنتج → مزامنة الكتالوج فوراً
+    await notifyProductUpserted(product, false);
+
     return NextResponse.json({ success: true, data: product });
   } catch (err) {
     return serverError("PATCH /api/admin/products/[id]", err);
@@ -90,6 +94,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     await prisma.adminLog.create({
       data: { userId: session.user.id, action: "DELETE_PRODUCT", entity: "Product", entityId: params.id },
     });
+
+    // إشعار حياك: حذف المنتج → إزالته من الكتالوج
+    await notifyProductDeleted(params.id);
+
     return NextResponse.json({ success: true });
   } catch (err) {
     return serverError("DELETE /api/admin/products/[id]", err);

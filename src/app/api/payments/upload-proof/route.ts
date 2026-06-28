@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { notifyOrderStatusUpdated } from "@/lib/hayyak";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +43,14 @@ export async function POST(req: NextRequest) {
       data: { proofImage: url, status: "UPLOADED" },
     });
 
-    await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: { status: "PENDING_PAYMENT_REVIEW" },
+      select: { id: true, orderNumber: true, status: true, total: true, user: { select: { name: true, phone: true } } },
     });
+
+    // إشعار حياك بتغيّر حالة الطلب إلى "قيد مراجعة الدفع"
+    await notifyOrderStatusUpdated(updatedOrder);
 
     return NextResponse.json({ success: true, url });
   } catch (error) {
