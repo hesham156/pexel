@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
+import Script from "next/script";
 
 export const dynamic = "force-dynamic";
 import "./globals.css";
@@ -98,6 +99,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <DbKeepAlive />
             <Suspense fallback={null}><PixelInjector /></Suspense>
             {children}
+            {/* حياك — فقاعة المحادثة على الموقع */}
+            <Script id="hayyak-config" strategy="afterInteractive">
+              {`window.SallaChatConfig = {
+    storeId: "pexelco",
+    apiUrl: "https://7ayak.app",
+    primaryColor: "#7c3aed",
+    storeName: "${siteName}"
+  };`}
+            </Script>
+            <Script src="https://7ayak.app/widget.js" strategy="afterInteractive" />
             <Toaster
               position="bottom-left"
               toastOptions={{
